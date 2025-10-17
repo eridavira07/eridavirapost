@@ -1,11 +1,11 @@
-// firebase.js (VERSI UNTUK HEADER WALLPAPER DARI LINK ADMIN + KONTROL FOKUS TERPISAH)
+// firebase.js (VERSI TERBARU: DELETE POST, COMMENT COUNT, ADMIN MANUAL NICKNAME)
 
 // --- Konfigurasi dan Setup Firebase (Ganti dengan detail Anda!) ---
 const firebaseConfig = {
-    apiKey: "AIzaSyC6eQQ5KmfNeE-MbbGztfgxUr-Q388K",
-    authDomain: "anon-chat-eri.firebaseapp.com",
-    databaseURL: "https://anon-chat-eri-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "anon-chat-eri",
+    apiKey: "AIzaSyC6eQQ5KmfNeE-MbbGztfgvUr-Q388K", // GANTI INI
+    authDomain: "anon-chat-eri.firebaseapp.com", // GANTI INI
+    databaseURL: "https://anon-chat-eri-default-rtdb.asia-southeast1.firebasedatabase.app", // GANTI INI
+    projectId: "anon-chat-eri", // GANTI INI
     storageBucket: "anon-chat-eri.appspot.com",
     messagingSenderId: "770226352457",
     appId: "1:770226352457:web:43d01556df75e5e49cea98",
@@ -33,7 +33,10 @@ const nicknameInput = document.getElementById('nickname-input');
 const setNicknameBtn = document.getElementById('set-nickname-btn');
 const sessionIdDisplay = document.getElementById('session-id-display');
 
-// Header Wallpaper Elements (NEW/UPDATED)
+// NEW: Input Nickname Admin
+const adminNicknameInput = document.getElementById('admin-nickname-input');
+
+// Header Wallpaper Elements
 const wallpaperSettingForm = document.getElementById('wallpaper-setting-form');
 const wallpaperLinkInput = document.getElementById('wallpaper-link');
 const setWallpaperBtn = document.getElementById('set-wallpaper-btn');
@@ -45,6 +48,7 @@ const focusDownBtn = document.getElementById('focus-down');
 const focusLeftBtn = document.getElementById('focus-left');
 const focusRightBtn = document.getElementById('focus-right');
 const focusResetBtn = document.getElementById('focus-reset');
+
 
 // --- Logika Pemeriksaan Kunci Admin ---
 const urlParams = new URLSearchParams(window.location.search);
@@ -66,7 +70,7 @@ let isLoading = false;
 let allPostsLoaded = false;
 
 // --- Otentikasi dan Pengelolaan Sesi Pengguna ---
-// ... (Logika Otentikasi dan Sesi) ...
+
 auth.signInAnonymously()
     .then(() => {
         console.log("Login Anonim Berhasil. UID:", auth.currentUser.uid);
@@ -78,13 +82,40 @@ auth.signInAnonymously()
 let currentUserId = sessionStorage.getItem('userId');
 let currentNickname = sessionStorage.getItem('nickname');
 
-if (!currentUserId || IS_ADMIN) {
-    currentUserId = IS_ADMIN ? 'admin_eri_' + (auth.currentUser ? auth.currentUser.uid.substring(0, 8) : Date.now().toString()) : Date.now().toString();
-    currentNickname = IS_ADMIN ? 'Administrator' : 'Anonim ' + Math.floor(Math.random() * 1000);
+
+// Logika Inisialisasi User Sederhana (Tidak ada nickname acak)
+function initializeUserSession() {
+    // 1. Inisialisasi ID jika belum ada
+    if (!currentUserId) {
+        currentUserId = Date.now().toString();
+        // Fallback nickname default
+        currentNickname = "Anonim User";
+        
+        sessionStorage.setItem('userId', currentUserId);
+        sessionStorage.setItem('nickname', currentNickname);
+    }
     
-    sessionStorage.setItem('userId', currentUserId);
-    sessionStorage.setItem('nickname', currentNickname);
+    // 2. Override jika Admin
+    if (IS_ADMIN) {
+        currentUserId = 'admin_eri_' + (auth.currentUser.uid.substring(0, 8));
+        currentNickname = sessionStorage.getItem('adminNickname') || 'Administrator'; // Coba ambil dari session atau default
+        
+        sessionStorage.setItem('userId', currentUserId); 
+        sessionStorage.setItem('nickname', currentNickname); 
+        sessionStorage.setItem('adminNickname', currentNickname); // Simpan default admin nickname
+    } else {
+        // Update global variable jika bukan Admin
+        currentNickname = sessionStorage.getItem('nickname');
+    }
+
+    // 3. Tampilkan User ID Sesi di modal
+    if (sessionIdDisplay) {
+        sessionIdDisplay.textContent = IS_ADMIN ? 'ADMIN' : currentUserId.substring(0, 8).toUpperCase();
+    }
 }
+
+// Panggil fungsi inisialisasi
+document.addEventListener('DOMContentLoaded', initializeUserSession);
 
 
 // --- Fungsi Utilitas ---
@@ -103,21 +134,31 @@ function formatTimestamp(timestamp) {
 // --- 1. Admin UI, Post Submission, dan Header Wallpaper ---
 if (IS_ADMIN) {
     uploadFormContainer.style.display = 'block';
+    
+    // Pre-fill admin nickname input
+    // Menggunakan currentNickname yang sudah diinisialisasi
+    adminNicknameInput.value = currentNickname; 
 } else {
     uploadFormContainer.style.display = 'none';
 }
 
-// 1.1 Logika Form Upload Media Feed (Tetap Sama)
+
+// 1.1 Logika Form Upload Media Feed (UPDATED)
 document.getElementById('media-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
     if (!IS_ADMIN) return;
 
-    // ... (Logika upload post media) ...
+    const adminNickname = adminNicknameInput.value.trim();
     const caption = document.getElementById('caption').value;
     const thumbnailUrl = document.getElementById('thumbnail-url').value;
     const originalUrl = document.getElementById('original-url').value;
     const submitBtn = document.getElementById('submit-btn');
+
+    if (!adminNickname) {
+        alert("Nama yang akan ditampilkan (Nickname) wajib diisi oleh Admin.");
+        return;
+    }
 
     if (!thumbnailUrl || !originalUrl) {
         alert("Link Thumbnail dan Link Media Asli wajib diisi.");
@@ -126,10 +167,13 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Mengirim...';
+    
+    // Simpan nickname yang baru diinput admin ke session untuk post berikutnya
+    sessionStorage.setItem('adminNickname', adminNickname);
 
     const postData = {
         anonymousUserId: currentUserId,
-        anonymousNickname: currentNickname, 
+        anonymousNickname: adminNickname, // Menggunakan input Admin
         caption: caption,
         thumbnailUrl: thumbnailUrl,
         originalMediaUrl: originalUrl,
@@ -139,7 +183,10 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
     database.ref('posts').push(postData)
         .then(() => {
             alert('Media berhasil diunggah! Memuat Feed Baru...');
-            document.getElementById('media-form').reset(); 
+            
+            document.getElementById('caption').value = ''; 
+            document.getElementById('thumbnail-url').value = '';
+            document.getElementById('original-url').value = '';
             
             mediaFeed.innerHTML = '<h2>Feed Terbaru 🔥</h2>';
             lastPostKey = null;
@@ -156,7 +203,9 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
         });
 });
 
-// 1.2 Logika Pengaturan Header Wallpaper (NEW)
+// 1.2 Logika Pengaturan Header Wallpaper
+const headerConfigRef = database.ref('config/headerWallpaper');
+
 wallpaperSettingForm.addEventListener('submit', function(e) {
     e.preventDefault();
     if (!IS_ADMIN) return;
@@ -168,30 +217,35 @@ wallpaperSettingForm.addEventListener('submit', function(e) {
     btn.disabled = true;
     btn.textContent = 'Menyimpan...';
 
-    const wallpaperData = {
-        url: link,
-        focusPosition: '50% 50%', // Reset fokus saat ganti gambar
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    };
+    let existingFocus = `${currentFocusX}% ${currentFocusY}%`;
 
-    database.ref('config/headerWallpaper').set(wallpaperData)
-        .then(() => {
-            alert('Header Wallpaper berhasil diganti dan fokus direset!');
-            loadHeaderWallpaper();
-        })
-        .catch(error => {
-            console.error("Gagal menyimpan link wallpaper:", error);
-            alert('Gagal mengganti wallpaper.');
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.textContent = 'Ganti Dinding';
-        });
+    headerConfigRef.once('value').then(snapshot => {
+        const config = snapshot.val();
+        if (config && config.focusPosition) {
+            existingFocus = config.focusPosition;
+        }
+
+        const wallpaperData = {
+            url: link,
+            focusPosition: existingFocus, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+    
+        return headerConfigRef.set(wallpaperData);
+    })
+    .then(() => {
+        alert('Header Wallpaper berhasil diganti!');
+        loadHeaderWallpaper();
+    })
+    .catch(error => {
+        console.error("Gagal menyimpan link wallpaper:", error);
+        alert('Gagal mengganti wallpaper.');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Ganti Dinding';
+    });
 });
-
-
-// 1.3 Logika Pemuatan Header Wallpaper (UPDATED)
-const headerConfigRef = database.ref('config/headerWallpaper');
 
 function applyFocus(positionString) {
     headerWallpaperImage.style.objectPosition = positionString;
@@ -219,7 +273,6 @@ function loadHeaderWallpaper() {
             wallpaperLinkInput.value = config.url;
             const focusPosition = config.focusPosition || '50% 50%';
             
-            // Terapkan fokus
             applyFocus(focusPosition);
 
         } else {
@@ -231,11 +284,10 @@ function loadHeaderWallpaper() {
     });
 }
 
-// Inisialisasi Header Wallpaper
 document.addEventListener('DOMContentLoaded', loadHeaderWallpaper);
 
 
-// 1.4 Logika Event Listener Kontrol Fokus Admin
+// 1.3 Logika Event Listener Kontrol Fokus Admin
 if (IS_ADMIN) {
     const updateFocus = (axis, direction) => {
         const currentLink = wallpaperLinkInput.value.trim();
@@ -266,19 +318,50 @@ if (IS_ADMIN) {
 }
 
 
-// --- 2. Lazy Loading dan Post Display (Feed Media) ---
+// --- 2. Admin Nickname Management (Dihapus) ---
+
+
+// --- 3. Lazy Loading, Post Display, dan Comment Count ---
+
+// Fungsi untuk Ambil jumlah komentar untuk Post ID tertentu
+function fetchCommentCount(postId, element) {
+    database.ref('comments/' + postId).once('value', (snapshot) => {
+        const totalComments = snapshot.numChildren();
+        
+        const commentCountElement = element.querySelector('.comment-count-display');
+        if (commentCountElement) {
+            commentCountElement.textContent = `${totalComments} Komentar`;
+        }
+    }).catch(error => {
+        console.error("Gagal mengambil hitungan komentar:", error);
+    });
+}
+
+
 function createPostElement(postId, data) {
     const postDiv = document.createElement('div');
     postDiv.className = 'media-post';
     postDiv.setAttribute('data-id', postId);
 
     const formattedTime = formatTimestamp(data.timestamp); 
+    
+    // Tombol Hapus Post (Hanya untuk Admin)
+    const deleteButtonHTML = IS_ADMIN ? 
+        `<button onclick="deletePost('${postId}')" 
+                 style="background: var(--deleted-color); color: white; border: none; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; cursor: pointer; float: right; margin-left: 10px;">
+                 Hapus Post
+         </button>` 
+        : '';
+
 
     postDiv.innerHTML = `
         <div class="post-header">
-            <p>
+            <p style="margin-bottom: 5px;">
                 <strong>${data.anonymousNickname || 'Anonim User'}</strong> 
                 <span style="float: right;">${formattedTime}</span>
+                ${deleteButtonHTML} </p>
+            <p style="margin-top: 5px; font-size: 0.8em; color: var(--accent-color);">
+                <span class="comment-count-display">Memuat...</span>
             </p>
         </div>
         <div class="media-container">
@@ -289,6 +372,8 @@ function createPostElement(postId, data) {
         </div>
         ${data.caption ? `<div class="post-caption">${data.caption}</div>` : ''}
     `;
+    
+    fetchCommentCount(postId, postDiv);
 
     return postDiv;
 }
@@ -318,9 +403,13 @@ function loadPosts() {
         isLoading = false;
         loadingIndicator.style.display = 'none';
 
-        if (posts.length === 0) {
+        if (posts.length === 0 && lastPostKey) {
              allPostsLoaded = true;
              loadingIndicator.querySelector('p').textContent = "Semua media telah dimuat.";
+             loadingIndicator.style.display = 'block';
+             return;
+        } else if (posts.length === 0 && !lastPostKey) {
+             loadingIndicator.querySelector('p').textContent = "Belum ada media yang diunggah.";
              loadingIndicator.style.display = 'block';
              return;
         }
@@ -350,7 +439,6 @@ function loadPosts() {
     });
 }
 
-// Panggil fungsi pemuatan post pertama kali
 loadPosts();
 
 
@@ -365,9 +453,7 @@ window.addEventListener('scroll', () => {
 });
 
 
-// --- 3. Logika Modal dan Komentar ---
-
-// ... (Logika Modal dan Komentar tetap sama) ...
+// --- 4. Logika Modal dan Komentar ---
 
 // Fungsi untuk menghapus komentar (Soft Delete oleh Admin)
 window.deleteComment = function(postId, commentId) {
@@ -381,10 +467,51 @@ window.deleteComment = function(postId, commentId) {
             text: "Pesan ini dihapus oleh Admin", 
             deletedTimestamp: firebase.database.ServerValue.TIMESTAMP 
         })
-        .then(() => console.log("Komentar berhasil ditandai sebagai dihapus oleh Admin"))
+        .then(() => {
+            console.log("Komentar berhasil ditandai sebagai dihapus oleh Admin");
+            const postElement = document.querySelector(`.media-post[data-id="${postId}"]`);
+            if(postElement) {
+                 fetchCommentCount(postId, postElement);
+            }
+        })
         .catch(error => console.error("Gagal menandai komentar sebagai dihapus:", error));
     }
 }
+
+// Fungsi untuk menghapus Post (Media dan Komentar terkait) oleh Admin
+window.deletePost = function(postId) {
+    if (!IS_ADMIN) {
+        alert("Akses ditolak. Hanya Admin yang dapat menghapus postingan.");
+        return;
+    }
+    if (confirm("PERINGATAN! Apakah Anda yakin ingin menghapus postingan ini? Semua komentar terkait juga akan dihapus permanen.")) {
+        
+        database.ref(`posts/${postId}`).remove()
+            .then(() => {
+                return database.ref(`comments/${postId}`).remove();
+            })
+            .then(() => {
+                alert("Postingan dan semua komentar terkait berhasil dihapus.");
+                
+                const postElement = document.querySelector(`.media-post[data-id="${postId}"]`);
+                if (postElement) {
+                    postElement.remove();
+                }
+                
+                if (mediaFeed.children.length <= 1) { 
+                     mediaFeed.innerHTML = '<h2>Feed Terbaru 🔥</h2>';
+                     lastPostKey = null;
+                     allPostsLoaded = false;
+                     loadPosts(); 
+                }
+            })
+            .catch(error => {
+                console.error("Gagal menghapus postingan:", error);
+                alert("Gagal menghapus postingan.");
+            });
+    }
+}
+
 
 // Fungsi untuk memuat komentar (Menggunakan 'value' listener)
 function loadComments(postId) {
@@ -445,11 +572,9 @@ window.openModal = function(imgElement) {
     
     // Setup UI Modal
     if (!IS_ADMIN) {
-        nicknameInput.value = sessionStorage.getItem('nickname');
-        if(sessionIdDisplay) {
-            sessionIdDisplay.textContent = sessionStorage.getItem('userId').substring(0, 8).toUpperCase();
-        }
+        nicknameInput.value = currentNickname; 
     } else {
+        // Sembunyikan input nickname dan tombol set untuk Admin di modal
         if(setNicknameBtn) setNicknameBtn.style.display = 'none';
         if(nicknameInput) nicknameInput.style.display = 'none';
         if(sessionIdDisplay) sessionIdDisplay.textContent = 'ADMIN';
@@ -484,9 +609,13 @@ commentForm.addEventListener('submit', function(e) {
 
     let finalNickname = currentNickname;
     if (!IS_ADMIN) {
+        // User biasa menggunakan nickname dari input modal (jika diubah)
         finalNickname = nicknameInput.value.trim() || currentNickname;
         sessionStorage.setItem('nickname', finalNickname); 
         currentNickname = finalNickname;
+    } else {
+        // Admin menggunakan nickname yang terakhir digunakan dari session
+        finalNickname = sessionStorage.getItem('adminNickname') || 'Administrator';
     }
     
     const commentData = {
@@ -499,6 +628,10 @@ commentForm.addEventListener('submit', function(e) {
     database.ref('comments/' + currentModalPostId).push(commentData)
         .then(() => {
             commentInput.value = ''; 
+            const postElement = document.querySelector(`.media-post[data-id="${currentModalPostId}"]`);
+            if(postElement) {
+                 fetchCommentCount(currentModalPostId, postElement);
+            }
         })
         .catch(error => {
             console.error("Gagal mengirim komentar:", error);

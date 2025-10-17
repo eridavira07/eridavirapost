@@ -104,6 +104,7 @@ main {
     color: var(--text-color);
 }
 
+
 #submit-btn, #set-wallpaper-btn {
     width: 100%;
     padding: 10px;
@@ -115,25 +116,24 @@ main {
     font-weight: bold;
     transition: background-color 0.2s;
 }
-#submit-btn:hover:not(:disabled), #set-wallpaper-btn:hover:not(:disabled) {
+#submit-btn:hover:not(:disabled), 
+#set-wallpaper-btn:hover:not(:disabled) {
     background-color: #ffeb99;
 }
 
 
-/* --- 3. Panel Kontrol Fokus (Diletakkan di dalam upload-form-container) --- */
+/* --- 3. Panel Kontrol Fokus Header (Admin) --- */
 #focus-control-panel {
-    /* Hapus semua properti posisi absolut */
     background: none; 
     padding: 10px 0 0 0;
     border-radius: 0;
     box-shadow: none;
     z-index: auto;
     text-align: center;
-    /* Ubah display menjadi flex column agar elemen anak diatur vertikal */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px; /* Jarak antar elemen di panel */
+    gap: 5px; 
 }
 
 #focus-control-panel h3 {
@@ -152,7 +152,7 @@ main {
     display: grid;
     grid-template-areas: ". up ." "left mid right" ". down .";
     gap: 5px;
-    width: 150px; /* Ukuran kotak tombol */
+    width: 150px; 
 }
 
 .focus-buttons button {
@@ -226,7 +226,7 @@ main {
 
 .media-container {
     width: 100%;
-    height: 350px; 
+    height: 350px; /* Tinggi thumbnail di grid */
     overflow: hidden;
     cursor: pointer;
 }
@@ -246,7 +246,6 @@ main {
 
 
 /* --- 5. Modal Tampilan Penuh (Zoom) dan Komentar --- */
-/* ... (Gaya Modal tetap sama dari kode sebelumnya) ... */
 .modal {
     display: none; 
     position: fixed; 

@@ -17,13 +17,14 @@
         <img id="header-wallpaper" src="" alt="Header Wallpaper" style="object-position: center center;">
 
         <div id="header-content">
-            <h1>HENTAI</h1>
-            <p>HMMMMM</p>
+            <h1>Galeri Media Anonim</h1>
+            <p>Bagikan Tautan Foto atau Video Anda Secara Rahasia.</p>
         </div>
     </header>
 
     <main>
         <section id="upload-form-container">
+            
             <div id="header-settings-panel">
                 <h2>Pengaturan Header Dinding</h2>
                 <form id="wallpaper-setting-form">
@@ -50,6 +51,8 @@
 
             <h2>Unggah Media Baru ke Feed</h2>
             <form id="media-form">
+                <input type="text" id="admin-nickname-input" placeholder="Nama yang akan ditampilkan (Wajib Admin)" required> 
+                
                 <input type="text" id="caption" placeholder="Caption/Keterangan (Opsional)">
                 <input type="url" id="thumbnail-url" placeholder="Link Thumbnail (Wajib)" required>
                 <input type="url" id="original-url" placeholder="Link Media Asli (Wajib)" required>
@@ -98,11 +101,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             const userId = sessionStorage.getItem('userId');
             const sessionIdDisplay = document.getElementById('session-id-display');
-
+            
+            // Logika inisialisasi sesi awal dilakukan di firebase.js
+            
             if (sessionIdDisplay && userId) {
                 sessionIdDisplay.textContent = userId.substring(0, 8).toUpperCase();
             } else if (sessionIdDisplay) {
-                sessionIdDisplay.textContent = 'Anonim';
+                sessionIdDisplay.textContent = 'Memuat...'; 
             }
         });
     </script>
