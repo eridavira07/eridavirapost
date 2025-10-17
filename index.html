@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeri Media Anonim</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+<body>
+
+    <header id="dynamic-header">
+        <img id="header-wallpaper" src="" alt="Header Wallpaper" style="object-position: center center;">
+
+        <div id="header-content">
+            <h1>HENTAI</h1>
+            <p>HMMMMM</p>
+        </div>
+    </header>
+
+    <main>
+        <section id="upload-form-container">
+            <div id="header-settings-panel">
+                <h2>Pengaturan Header Dinding</h2>
+                <form id="wallpaper-setting-form">
+                    <input type="url" id="wallpaper-link" placeholder="Link Gambar Dinding Header" required>
+                    <button type="submit" id="set-wallpaper-btn">Ganti Dinding</button>
+                </form>
+
+                <div id="focus-control-panel" class="control-panel">
+                    <h3>Atur Fokus Header</h3>
+                    <p>Posisi: <span id="current-focus-display">center center</span></p>
+                    <div class="focus-buttons">
+                        <button id="focus-up">⬆️</button>
+                        <div class="mid-row">
+                            <button id="focus-left">⬅️</button>
+                            <button id="focus-reset">⚫</button>
+                            <button id="focus-right">➡️</button>
+                        </div>
+                        <button id="focus-down">⬇️</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border-color: var(--border-color); margin: 20px 0;">
+
+            <h2>Unggah Media Baru ke Feed</h2>
+            <form id="media-form">
+                <input type="text" id="caption" placeholder="Caption/Keterangan (Opsional)">
+                <input type="url" id="thumbnail-url" placeholder="Link Thumbnail (Wajib)" required>
+                <input type="url" id="original-url" placeholder="Link Media Asli (Wajib)" required>
+                <button type="submit" id="submit-btn">Kirim Anonim</button>
+            </form>
+        </section>
+        
+        <section id="media-feed">
+            <h2>Feed Terbaru 🔥</h2>
+            </section>
+        
+        <div id="loading-indicator" style="text-align: center; padding: 20px 0; color: #a0aec0; display: none;">
+            <p>Memuat lebih banyak media...</p>
+        </div>
+    </main>
+
+    
+    <div id="media-modal" class="modal">
+        <span class="close-btn">&times;</span>
+        <div class="modal-content-wrapper">
+            <div class="modal-image-container">
+                <img class="modal-content" id="modal-image">
+            </div>
+            <div class="modal-comments-section">
+                <h3>Komentar</h3>
+                <div id="nickname-container" style="padding-bottom: 15px; border-bottom: 1px solid #4a5568;">
+                    <p style="margin: 0 0 5px 0; font-size: 0.9em; color: #a0aec0;">ID Sesi Anda: <span id="session-id-display">Memuat...</span></p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="nickname-input" placeholder="Masukkan Nama Anda" style="flex-grow: 1;">
+                        <button type="button" id="set-nickname-btn">Set Nama</button>
+                    </div>
+                </div>
+                <div id="comments-list" class="comments-list" style="margin-top: 15px;">
+                </div>
+                <form id="comment-form" class="comment-form">
+                    <input type="text" id="comment-input" placeholder="Tulis komentar Anda..." required>
+                    <button type="submit">Kirim</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userId = sessionStorage.getItem('userId');
+            const sessionIdDisplay = document.getElementById('session-id-display');
+
+            if (sessionIdDisplay && userId) {
+                sessionIdDisplay.textContent = userId.substring(0, 8).toUpperCase();
+            } else if (sessionIdDisplay) {
+                sessionIdDisplay.textContent = 'Anonim';
+            }
+        });
+    </script>
+</body>
+</html>
