@@ -18,7 +18,7 @@
 
         <div id="header-content">
             <h1>HENTAI</h1>
-            <p>zZzZz</p>
+            <p>Eri Davira</p>
         </div>
     </header>
 
@@ -62,8 +62,13 @@
         
         <section id="media-feed">
             <h2>Feed Terbaru 🔥</h2>
-            </section>
-        
+        </section>
+
+        <div id="pagination-controls" class="pagination-controls">
+            <button id="prev-page-btn" disabled>&larr; Prev</button>
+            <span id="page-numbers-display">Halaman 1</span>
+            <button id="next-page-btn" disabled>Next &rarr;</button>
+        </div>
         <div id="loading-indicator" style="text-align: center; padding: 20px 0; color: #a0aec0; display: none;">
             <p>Memuat lebih banyak media...</p>
         </div>
@@ -101,8 +106,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             const userId = sessionStorage.getItem('userId');
             const sessionIdDisplay = document.getElementById('session-id-display');
-            
-            // Logika inisialisasi sesi awal dilakukan di firebase.js
             
             if (sessionIdDisplay && userId) {
                 sessionIdDisplay.textContent = userId.substring(0, 8).toUpperCase();

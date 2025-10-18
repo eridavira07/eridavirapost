@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifikasi Komentar | Galeri Anonim</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Styling Khusus untuk Notifikasi (Sama seperti sebelumnya) */
+        :root {
+            --bg-color: #1a202c; 
+            --text-color: #e2e8f0; 
+            --card-bg: #2d3748; 
+            --border-color: #4a5568;
+            --admin-color: #ffd700; 
+            --accent-color: #63b3ed; 
+        }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: sans-serif; }
+        #notification-container {
+            max-width: 800px; margin: 40px auto; padding: 20px; background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        #notification-list { list-style: none; padding: 0; }
+        .notification-item {
+            padding: 15px; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        }
+        .notification-item:hover { background-color: #364253; }
+        .notification-item:last-child { border-bottom: none; }
+        .notification-content p { margin: 0; line-height: 1.5; }
+        .commenter-name { font-weight: bold; color: var(--accent-color); }
+        .post-id-ref { font-size: 0.8em; color: #a0aec0; margin-top: 5px; }
+        .timestamp { font-size: 0.7em; color: #718096; white-space: nowrap; }
+        #auth-message { text-align: center; padding: 50px; }
+        .back-button {
+            display: block; width: fit-content; margin: 20px auto 0; padding: 10px 20px; background-color: var(--accent-color); color: white; text-decoration: none; border-radius: 4px; transition: background-color 0.2s;
+        }
+        .back-button:hover { background-color: #4299e1; }
+    </style>
+</head>
+<body>
+
+    <header id="static-header" style="background-color: var(--card-bg); padding: 20px; text-align: center;">
+        <h1 style="margin: 0; color: var(--admin-color);">Pusat Notifikasi</h1>
+        <p style="margin: 5px 0 0 0; color: #a0aec0;">Komentar Terbaru (Hanya untuk Admin)</p>
+    </header>
+
+    <main>
+        <div id="auth-message" style="display: none;">
+            <h2>Akses Ditolak 🔒</h2>
+            <p>Anda harus mengakses halaman ini sebagai Admin. Tambahkan <code>?key=admin-eri-2025</code> di akhir URL.</p>
+        </div>
+
+        <div id="notification-container" style="display: none;">
+            <h2>Notifikasi Komentar Terbaru</h2>
+            <ul id="notification-list">
+                </ul>
+        </div>
+        
+        <a href="index.html" class="back-button">Kembali ke Feed</a>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    
+    <script>
+        // --- Konfigurasi dan Setup Firebase (Ganti dengan detail Anda!) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6eQQ5KmfNeE-MbbGztfgvUr-Q388K", // GANTI INI
+            authDomain: "anon-chat-eri.firebaseapp.com", // GANTI INI
+            databaseURL: "https://anon-chat-eri-default-rtdb.asia-southeast1.firebasedatabase.app", // GANTI INI
+            projectId: "anon-chat-eri", // GANTI INI
+            storageBucket: "anon-chat-eri.appspot.com",
+            messagingSenderId: "770226352457",
+            appId: "1:770226352457:web:43d01556df75e5e49cea98",
+            measurementId: "G-2YRM1KMDDM"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const database = firebase.database();
+
+        // --- Logika Pemeriksaan Kunci Admin ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessKey = urlParams.get('key');
+        const ADMIN_KEY = 'admin-eri-2025';
+        const IS_ADMIN = accessKey === ADMIN_KEY; 
+
+        const notificationContainer = document.getElementById('notification-container');
+        const notificationList = document.getElementById('notification-list');
+        const authMessage = document.getElementById('auth-message');
+
+
+        // Fungsi Utilitas
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Tanggal tidak diketahui';
+            const date = new Date(timestamp);
+            const options = {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false 
+            };
+            return date.toLocaleString('id-ID', options);
+        }
+
+        // Fungsi Utama: Memuat Notifikasi
+        function loadNotifications() {
+            
+            // Ambil 50 post terakhir
+            database.ref('posts').orderByKey().limitToLast(50).once('value', (postsSnapshot) => {
+                const postIds = [];
+                postsSnapshot.forEach(postChild => {
+                    postIds.push(postChild.key);
+                });
+
+                if (postIds.length === 0) {
+                    notificationList.innerHTML = '<p style="text-align: center; margin-top: 20px;">Belum ada postingan yang diunggah.</p>';
+                    return;
+                }
+
+                let allComments = [];
+                let postsProcessed = 0;
+
+                // Iterasi dan Ambil Komentar dari 50 Post Terbaru
+                postIds.forEach(postId => {
+                    database.ref('comments/' + postId).once('value', (commentsSnapshot) => {
+                        commentsSnapshot.forEach(commentChild => {
+                            const commentData = commentChild.val();
+                            if (!commentData.isDeleted) {
+                                allComments.push({
+                                    postId: postId,
+                                    commentId: commentChild.key,
+                                    ...commentData
+                                });
+                            }
+                        });
+
+                        postsProcessed++;
+
+                        if (postsProcessed === postIds.length) {
+                            
+                            allComments.sort((a, b) => b.timestamp - a.timestamp);
+
+                            renderNotifications(allComments.slice(0, 50));
+                        }
+                    });
+                });
+
+            });
+        }
+
+        // Fungsi untuk Merender Notifikasi
+        function renderNotifications(comments) {
+            if (comments.length === 0) {
+                notificationList.innerHTML = '<p style="text-align: center; margin-top: 20px;">Tidak ada komentar terbaru yang ditemukan.</p>';
+                return;
+            }
+
+            notificationList.innerHTML = ''; 
+            comments.forEach(comment => {
+                const isCommentByAdmin = comment.userId && comment.userId.startsWith('admin_eri_');
+                const nicknameStyle = isCommentByAdmin ? 'color: var(--admin-color);' : '';
+                
+                const listItem = document.createElement('li');
+                listItem.className = 'notification-item';
+                
+                // TAUTAN BARU: Mengirim postid agar index.html dapat menghitung halaman
+                listItem.onclick = () => {
+                    window.location.href = `index.html?key=${ADMIN_KEY}&postid=${comment.postId}`;
+                };
+
+                listItem.innerHTML = `
+                    <div class="notification-content">
+                        <p>
+                            Komentar Baru dari 
+                            <span class="commenter-name" style="${nicknameStyle}">${comment.nickname || 'Anonim User'}</span>: 
+                            "<strong>${comment.text.substring(0, 50)}${comment.text.length > 50 ? '...' : ''}</strong>"
+                        </p>
+                        <p class="post-id-ref">
+                            Pada Post ID: #${comment.postId.substring(0, 8)} 
+                        </p>
+                    </div>
+                    <span class="timestamp">${formatTimestamp(comment.timestamp)}</span>
+                `;
+                notificationList.appendChild(listItem);
+            });
+        }
+
+
+        // --- Inisialisasi Halaman ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (IS_ADMIN) {
+                authMessage.style.display = 'none';
+                notificationContainer.style.display = 'block';
+                loadNotifications();
+            } else {
+                authMessage.style.display = 'block';
+                notificationContainer.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
