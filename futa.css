@@ -1,4 +1,4 @@
-/* style.css */
+/* style.css - KODE CSS LENGKAP YANG TELAH DIPERBARUI */
 
 :root {
     --bg-color: #1a202c;
@@ -8,6 +8,12 @@
     --admin-color: #ffd700;
     --deleted-color: #e53e3e;
     --accent-color: #63b3ed;
+
+    /* WARNA RARITY YANG DIPERBARUI */
+    --rarity-silver: #a0aec0;
+    --rarity-gold: #ffcc00;
+    --rarity-epic: #9f7aea;
+    --rarity-legendary: #ff4500;
 }
 
 body {
@@ -467,4 +473,230 @@ main {
     color: var(--text-color);
     font-size: 1.1em;
     font-weight: bold;
+}
+
+/* --- Styling Pin Post BARU --- */
+
+.media-post.pinned-post {
+    /* Border untuk highlight post yang di-pin */
+    border: 3px solid var(--admin-color);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); 
+    /* Order: -1 memastikan post muncul pertama di layout Grid/Flex */
+    order: -1; 
+}
+
+/* Sedikit penyesuaian untuk header post yang di-pin */
+.media-post.pinned-post .post-header {
+    border-bottom: 1px solid var(--admin-color);
+    background-color: rgba(255, 215, 0, 0.1);
+}
+
+/* --- CSS BARU UNTUK PAGINASI LOMPAT --- */
+
+/* Menyesuaikan wadah kontrol paginasi agar item baru tersusun rapi */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; /* Jarak antar elemen */
+    padding: 20px 0;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color, #4a5568);
+}
+
+/* Gaya dasar untuk semua tombol paginasi */
+.pagination-controls button {
+    background-color: var(--accent-color, #48bb78);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: bold;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background-color: var(--hover-color, #38a169);
+}
+
+/* Gaya untuk tombol halaman terakhir (>>) */
+#last-page-btn {
+    padding: 8px 15px;
+    margin-left: 5px; /* Sedikit jarak dari tombol Next */
+}
+
+/* Gaya untuk wadah Input Lompat */
+#jump-to-page-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Gaya untuk Input Nomor Halaman */
+#jump-to-page-input {
+    width: 60px; /* Lebar yang pas untuk 3 digit */
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #4a5568);
+    border-radius: 6px;
+    background-color: var(--background-darker, #1a202c);
+    color: var(--text-color, #cbd5e0);
+    text-align: center;
+}
+
+/* Gaya tombol Lompat */
+#jump-to-page-btn {
+    background-color: var(--secondary-color, #3182ce);
+    padding: 8px 10px;
+}
+
+#jump-to-page-btn:hover:not(:disabled) {
+    background-color: #2b6cb0;
+}
+
+/* Gaya untuk tombol yang dinonaktifkan */
+.pagination-controls button:disabled {
+    background-color: var(--disabled-color, #4a5568);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Gaya untuk tampilan nomor halaman */
+#page-numbers-display {
+    color: var(--text-color, #cbd5e0);
+    font-weight: 500;
+}
+
+/* --- CSS BARU: KELANGKAAN (RARITY) --- */
+
+/* Rarity Badges di post-header */
+.rarity-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 5px;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.rarity-badge.rarity-silver {
+    background-color: var(--rarity-silver); /* Silver/Gray */
+    color: #1a202c;
+}
+
+.rarity-badge.rarity-gold {
+    background-color: var(--rarity-gold); /* Gold */
+    color: #1a202c;
+}
+
+.rarity-badge.rarity-epic {
+    background-color: var(--rarity-epic); /* Epic/Purple */
+    color: white;
+    box-shadow: 0 0 5px var(--rarity-epic);
+}
+
+.rarity-badge.rarity-legendary {
+    background-color: var(--rarity-legendary); /* Legendary/Orange-Red */
+    color: white;
+    box-shadow: 0 0 8px var(--rarity-legendary);
+}
+
+/* Efek Border Kelangkaan pada media-post */
+.media-post {
+    /* Tambahkan transition untuk efek border yang lebih halus */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s;
+    border: 2px solid var(--card-bg); /* Border dasar */
+}
+
+/* SILVER - Border solid sederhana */
+.media-post.rarity-silver {
+    border: 2px solid var(--rarity-silver);
+}
+
+/* GOLD - Border emas dengan shadow halus */
+.media-post.rarity-gold {
+    border: 2px solid var(--rarity-gold);
+    box-shadow: 0 0 7px rgba(255, 204, 0, 0.8); /* Shadow lebih menonjol */
+}
+
+/* EPIC - Border ungu neon dengan glow yang kuat */
+.media-post.rarity-epic {
+    border: 2px solid var(--rarity-epic);
+    box-shadow: 0 0 12px var(--rarity-epic);
+}
+
+/* LEGENDARY - Border menyala dengan efek mewah dan animasi */
+.media-post.rarity-legendary {
+    border: 3px solid var(--rarity-legendary); /* Border lebih tebal */
+    /* Efek glow dan animasi yang mewah */
+    box-shadow: 0 0 18px var(--rarity-legendary), 0 0 7px #ffcc00 inset;
+    animation: legendary-pulse 2.5s infinite alternate;
+}
+
+/* Animasi Legendary yang diperbarui */
+@keyframes legendary-pulse {
+    0% {
+        border-color: var(--rarity-legendary); /* Orange-Red */
+        box-shadow: 0 0 15px var(--rarity-legendary), 0 0 5px #ffcc00 inset;
+    }
+    50% {
+        border-color: #ffcc00; /* Gold */
+        box-shadow: 0 0 25px #ffcc00, 0 0 10px var(--rarity-legendary) inset;
+    }
+    100% {
+        border-color: var(--rarity-legendary); /* Kembali ke Orange-Red */
+        box-shadow: 0 0 15px var(--rarity-legendary), 0 0 5px #ffcc00 inset;
+    }
+}
+
+
+/* --- Tambahan untuk menata letak elemen select/label agar rapi di form upload --- */
+
+#media-form label {
+    display: block; /* Memastikan label mengambil baris penuh */
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+#media-form select,
+.filter-controls select {
+    width: 100%; /* Mengambil lebar penuh kontainer */
+    padding: 12px;
+    margin-bottom: 15px; /* Tambahkan ruang di bawah select */
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+    background: #364253; /* Warna latar belakang gelap */
+    color: var(--text-color); /* Warna teks cerah */
+    font-size: 1em;
+    /* Menghilangkan atau menimpa tampilan default browser */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292%22%20height%3D%22292%22%3E%3Cpath%20fill%3D%22%23e2e8f0%22%20d%3D%22M283%2075.5A10.9%2010.9%200%200%200%20268.4%2069L146%20191.2%2023.6%2069.2a10.9%2010.9%200%200%200-15.5%2015.5L146%20222.8l137.9-137.8c4.6-4.6%204.6-12%200-16.6z%22%2F%3E%3C%2Fsvg%3E'); /* Ikon panah ke bawah kustom */
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 12px auto;
+    padding-right: 30px; /* Ruang untuk ikon panah */
+}
+
+/* Penyesuaian untuk Filter Controls di luar form utama */
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--card-bg); /* Tambahkan latar belakang untuk menonjol */
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.filter-controls select {
+    width: auto; /* Biarkan select filter mengambil lebar sesuai konten */
+    min-width: 150px;
+    margin-bottom: 0;
 }

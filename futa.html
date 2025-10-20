@@ -32,7 +32,7 @@
                     <button type="submit" id="set-wallpaper-btn">Ganti Dinding</button>
                 </form>
 
-                <div id="focus-control-panel" class="control-panel">
+                <div id="focus-control-panel" class="control-panel" style="display:none;">
                     <h3>Atur Fokus Header</h3>
                     <p>Posisi: <span id="current-focus-display">center center</span></p>
                     <div class="focus-buttons">
@@ -49,16 +49,35 @@
 
             <hr style="border-color: var(--border-color); margin: 20px 0;">
 
-            <h2>Unggah Media Baru ke Feed</h2>
+            <h2>Unggah Media Baru ke Feed (Hanya Admin)</h2>
             <form id="media-form">
                 <input type="text" id="admin-nickname-input" placeholder="Nama yang akan ditampilkan (Wajib Admin)" required> 
+                
+                <label for="rarity-select" style="display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: var(--text-color);">Tingkat Kelangkaan Foto:</label>
+                <select id="rarity-select" required>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Epic">Epic</option>
+                    <option value="Legendary">Legendary</option>
+                </select>
                 
                 <input type="text" id="caption" placeholder="Caption/Keterangan (Opsional)">
                 <input type="url" id="thumbnail-url" placeholder="Link Thumbnail (Wajib)" required>
                 <input type="url" id="original-url" placeholder="Link Media Asli (Wajib)" required>
+                
                 <button type="submit" id="submit-btn">Kirim Anonim</button>
             </form>
         </section>
+        
+        <div class="filter-controls" style="margin-bottom: 20px;">
+            <label for="sort-select" style="font-weight: bold;">Urutkan:</label>
+            <select id="sort-select">
+                <option value="latest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+                <option value="popular">Terpopuler (Fallback ke Terbaru)</option>
+                <option value="rarity">Kelangkaan 💎 (Legendary > Epic > Gold > Silver)</option>
+            </select>
+        </div>
         
         <section id="media-feed">
             <h2>Feed Terbaru 🔥</h2>
@@ -68,13 +87,42 @@
             <button id="prev-page-btn" disabled>&larr; Prev</button>
             <span id="page-numbers-display">Halaman 1</span>
             <button id="next-page-btn" disabled>Next &rarr;</button>
+            
+            <button id="last-page-btn" disabled>&raquo; Terakhir</button>
+            
+            <div id="jump-to-page-container" class="jump-control">
+                <input type="number" id="jump-to-page-input" min="1" placeholder="Halaman">
+                <button id="jump-to-page-btn">Lompat</button>
+            </div>
         </div>
+        
         <div id="loading-indicator" style="text-align: center; padding: 20px 0; color: #a0aec0; display: none;">
             <p>Memuat lebih banyak media...</p>
         </div>
     </main>
-
     
+    <div id="edit-post-modal" class="modal">
+        <div class="modal-content-wrapper" style="max-width: 400px; padding: 20px;">
+            <span id="close-edit-btn" class="close-btn">&times;</span>
+            <h2>Edit Postingan</h2>
+            <form id="edit-post-form">
+                <input type="hidden" id="edit-post-id">
+                <input type="text" id="edit-nickname" placeholder="Nama Baru" required>
+                
+                <label for="edit-rarity-select" style="display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: var(--text-color);">Tingkat Kelangkaan Foto:</label>
+                <select id="edit-rarity-select" required>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Epic">Epic</option>
+                    <option value="Legendary">Legendary</option>
+                </select>
+                
+                <textarea id="edit-caption" placeholder="Caption Baru"></textarea>
+                <button type="submit" id="save-edit-btn" style="width: 100%;">Simpan Perubahan</button>
+            </form>
+        </div>
+    </div>
+
     <div id="media-modal" class="modal">
         <span class="close-btn">&times;</span>
         <div class="modal-content-wrapper">

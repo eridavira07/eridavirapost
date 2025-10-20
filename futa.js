@@ -1,4 +1,4 @@
-// firebase.js (VERSI TERBARU: Panning Penuh Menggunakan Transform: Translate + Scale)
+// firebase.js (VERSI TERBARU: Lazy Loading + Panning + Pin Post + Edit Post + Tombol Buka Postingan untuk Admin + Nama Admin Dapat Diubah + Paginasi Lompat + Rarity)
 
 // --- Konfigurasi dan Setup Firebase (Detail Baru Anda!) ---
 const firebaseConfig = {
@@ -35,6 +35,7 @@ const sessionIdDisplay = document.getElementById('session-id-display');
 
 // Input Nickname Admin
 const adminNicknameInput = document.getElementById('admin-nickname-input');
+const raritySelect = document.getElementById('rarity-select'); // BARU
 
 // Header Wallpaper Elements
 const wallpaperSettingForm = document.getElementById('wallpaper-setting-form');
@@ -53,6 +54,22 @@ const focusResetBtn = document.getElementById('focus-reset');
 const prevPageBtn = document.getElementById('prev-page-btn');
 const nextPageBtn = document.getElementById('next-page-btn');
 const pageNumbersDisplay = document.getElementById('page-numbers-display');
+const lastPageBtn = document.getElementById('last-page-btn'); 
+const jumpToPageInput = document.getElementById('jump-to-page-input'); 
+const jumpToPageBtn = document.getElementById('jump-to-page-btn'); 
+
+// ELEMEN SORTING
+const sortSelect = document.getElementById('sort-select');
+
+// ELEMEN EDIT POST
+const editPostModal = document.getElementById('edit-post-modal');
+const closeEditBtn = document.getElementById('close-edit-btn');
+const editPostForm = document.getElementById('edit-post-form');
+const editPostIdInput = document.getElementById('edit-post-id');
+const editNicknameInput = document.getElementById('edit-nickname');
+const editCaptionInput = document.getElementById('edit-caption');
+const editRaritySelect = document.getElementById('edit-rarity-select'); // <--- PERUBAHAN 1: Deklarasi elemen baru
+const saveEditBtn = document.getElementById('save-edit-btn');
 
 
 // --- Logika Pemeriksaan Kunci Admin ---
@@ -70,12 +87,14 @@ let currentFocusY = 50;
 const FOCUS_STEP = 5; 
 const ZOOM_STEP = 10; 
 
-// Pagination Variables
+// Pagination and Sorting Variables
 const POSTS_PER_PAGE = 12; 
 let currentPage = 1;
 let totalPosts = 0;
 let totalPages = 1;
 let postKeys = []; 
+let allPostsMinimalData = []; 
+let currentSort = 'latest'; 
 let isLoading = false; 
 
 
@@ -135,7 +154,6 @@ function formatTimestamp(timestamp) {
     return date.toLocaleString('id-ID', options);
 }
 
-// FUNGSI INI DIPERBAIKI: Menggunakan parseInt dengan radix 10 dan memastikan tipe number
 function parseFocusPosition(positionString) {
     const parts = positionString.split(' ');
     let x = 50;
@@ -144,11 +162,9 @@ function parseFocusPosition(positionString) {
         x = parseInt(parts[0].replace('%', ''), 10);
         y = parseInt(parts[1].replace('%', ''), 10);
     }
-    // Pastikan nilai yang dikembalikan adalah tipe 'number'
     return { x: Number(x), y: Number(y) }; 
 }
 
-// Fungsi untuk menyimpan fokus dan ukuran postingan ke DB
 function savePostFocusAndSizeToDB(postId, newFocus, newSize) {
     const updates = { 
         focusPosition: newFocus,
@@ -179,10 +195,11 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
     const caption = document.getElementById('caption').value;
     const thumbnailUrl = document.getElementById('thumbnail-url').value;
     const originalUrl = document.getElementById('original-url').value;
+    const rarity = raritySelect.value; // BARU: Ambil nilai kelangkaan
     const submitBtn = document.getElementById('submit-btn');
 
-    if (!adminNickname || !thumbnailUrl || !originalUrl) {
-        alert("Nama, Link Thumbnail, dan Link Media Asli wajib diisi.");
+    if (!adminNickname || !thumbnailUrl || !originalUrl || !rarity) {
+        alert("Nama, Link Thumbnail, Link Media Asli, dan Kelangkaan wajib diisi.");
         return;
     }
 
@@ -197,8 +214,9 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
         caption: caption,
         thumbnailUrl: thumbnailUrl,
         originalMediaUrl: originalUrl,
+        rarity: rarity, // BARU: Simpan kelangkaan
         focusPosition: '50% 50%', 
-        focusSize: '100%', // Ukuran default
+        focusSize: '100%', 
         timestamp: firebase.database.ServerValue.TIMESTAMP 
     };
 
@@ -209,9 +227,11 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
             document.getElementById('caption').value = ''; 
             document.getElementById('thumbnail-url').value = '';
             document.getElementById('original-url').value = '';
+            raritySelect.value = 'Silver'; // Reset rarity
             
             mediaFeed.innerHTML = '<h2>Feed Terbaru 🔥</h2>';
             currentPage = 1;
+            // Panggil initializePagination() untuk memuat ulang feed setelah posting
             initializePagination(); 
         })
         .catch(error => {
@@ -272,7 +292,6 @@ function applyFocus(positionString) {
     headerWallpaperImage.style.objectPosition = positionString;
     currentFocusDisplay.textContent = positionString;
     
-    // PENTING: Fokus Header tetap di-limit 0-100 karena tidak menggunakan transform: scale
     const parts = positionString.split(' ');
     currentFocusX = parseInt(parts[0]);
     currentFocusY = parseInt(parts[1]);
@@ -315,7 +334,6 @@ if (IS_ADMIN) {
         const currentLink = wallpaperLinkInput.value.trim();
         if (!currentLink) return alert("Atur link wallpaper dulu sebelum mengatur fokus.");
         
-        // PENTING: Untuk wallpaper header, kita tetap menggunakan batas 0-100
         if (axis === 'x') {
             currentFocusX = Math.min(100, Math.max(0, currentFocusX + direction * FOCUS_STEP));
         } else if (axis === 'y') {
@@ -343,30 +361,178 @@ if (IS_ADMIN) {
 }
 
 
-// --- 3. Pagination, Post Display, dan Comment Count ---
+// --- 2. Pin Post Logic ---
 
-function fetchCommentCount(postId, element) {
-    database.ref('comments/' + postId).once('value', (snapshot) => {
-        const totalComments = snapshot.numChildren();
+window.pinPost = function(postId, isCurrentlyPinned) {
+    if (!IS_ADMIN) {
+        alert("Akses ditolak. Hanya Admin yang dapat mem-pin postingan.");
+        return;
+    }
+    
+    const newPinStatus = !isCurrentlyPinned;
+    const action = newPinStatus ? "Pin" : "Lepas Pin";
+    if (!confirm(`Apakah Anda yakin ingin ${action} postingan ini?`)) {
+        return;
+    }
+    
+    let updates = {};
+    
+    if (newPinStatus) {
+        allPostsMinimalData.forEach(post => {
+            if (post.data.isPinned) {
+                updates[`posts/${post.id}/isPinned`] = null; 
+                post.data.isPinned = false; 
+            }
+        });
         
-        const commentCountElement = element.querySelector('.comment-count-display');
+        updates[`posts/${postId}/isPinned`] = true;
+    } else {
+        updates[`posts/${postId}/isPinned`] = null; 
+    }
+
+    const targetRef = database.ref('/');
+    
+    targetRef.update(updates)
+        .then(() => {
+            alert(`Postingan berhasil di${newPinStatus ? 'pin' : 'lepas pin'}! Memuat ulang feed...`);
+            const targetPost = allPostsMinimalData.find(post => post.id === postId);
+            if (targetPost) {
+                targetPost.data.isPinned = newPinStatus;
+            }
+            
+            initializePagination();
+        })
+        .catch(error => {
+            console.error(`Gagal ${action} postingan:`, error);
+            alert(`Gagal ${action} postingan.`);
+        });
+}
+
+// --- 3. Edit Post Logic ---
+
+// <--- PERUBAHAN 2: Tambah currentRarity di signature fungsi dan set nilainya
+window.openEditModal = function(postId, currentNickname, currentCaption, currentRarity) {
+    if (!IS_ADMIN) {
+        alert("Akses ditolak. Hanya Admin yang dapat mengedit postingan.");
+        return;
+    }
+    
+    editPostIdInput.value = postId;
+    editNicknameInput.value = currentNickname;
+    editCaptionInput.value = currentCaption;
+
+    if (editRaritySelect) {
+        editRaritySelect.value = currentRarity; 
+    }
+    
+    editPostModal.style.display = 'block';
+}
+
+// <--- PERUBAHAN 3: Ambil nilai kelangkaan dan masukkan ke objek update
+editPostForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!IS_ADMIN) return;
+    
+    const postId = editPostIdInput.value;
+    const newNickname = editNicknameInput.value.trim();
+    const newCaption = editCaptionInput.value.trim();
+    const newRarity = editRaritySelect.value;
+    
+    if (!newNickname) {
+        alert("Nama tidak boleh kosong.");
+        return;
+    }
+
+    saveEditBtn.disabled = true;
+    saveEditBtn.textContent = 'Menyimpan...';
+
+    const updates = {
+        anonymousNickname: newNickname,
+        caption: newCaption,
+        rarity: newRarity // Masukkan kelangkaan yang baru
+    };
+
+    database.ref(`posts/${postId}`).update(updates)
+        .then(() => {
+            alert("Postingan berhasil diperbarui! Memuat ulang feed...");
+            editPostModal.style.display = 'none';
+            initializePagination();
+        })
+        .catch(error => {
+            console.error("Gagal menyimpan perubahan postingan:", error);
+            alert("Gagal menyimpan perubahan postingan.");
+        })
+        .finally(() => {
+            saveEditBtn.disabled = false;
+            saveEditBtn.textContent = 'Simpan Perubahan';
+        });
+});
+
+closeEditBtn.onclick = function() {
+    editPostModal.style.display = 'none';
+}
+
+window.addEventListener('click', function(event) {
+    if (event.target == editPostModal) {
+        editPostModal.style.display = 'none';
+    }
+});
+
+window.openAdminModal = function(postId) {
+    const postElement = document.querySelector(`.media-post[data-id="${postId}"]`);
+    if (postElement) {
+        const imgElement = postElement.querySelector('.media-container img');
+        if (imgElement) {
+            openModal(imgElement);
+        } else {
+            console.error('Image element not found for post:', postId);
+        }
+    }
+}
+
+
+// --- 4. Pagination, Post Display, Comment Count, and SORTING LOGIC ---
+
+function fetchCommentCount(postId) {
+    return database.ref('comments/' + postId).once('value')
+        .then(snapshot => {
+            return snapshot.numChildren();
+        }).catch(error => {
+            console.error(`Gagal mengambil hitungan komentar untuk ${postId}:`, error);
+            return 0; 
+        });
+}
+
+function updateCommentCountDisplay(postId, totalComments) {
+    const postElement = document.querySelector(`.media-post[data-id="${postId}"]`);
+    if (postElement) {
+        const commentCountElement = postElement.querySelector('.comment-count-display');
         if (commentCountElement) {
             commentCountElement.textContent = `${totalComments} Komentar`;
         }
-    }).catch(error => {
-        console.error("Gagal mengambil hitungan komentar:", error);
-    });
+    }
 }
 
 
 function createPostElement(postId, data) {
+    // BARU: Ambil data kelangkaan
+    const rarity = data.rarity || 'Silver'; 
+
     const postDiv = document.createElement('div');
-    postDiv.className = 'media-post';
+    // BARU: Tambahkan class rarity
+    postDiv.className = `media-post rarity-${rarity.toLowerCase()}`;
+    
+    if (data.isPinned) {
+        postDiv.classList.add('pinned-post');
+    }
+    
     postDiv.setAttribute('data-id', postId);
+    
+    const commentCount = data.commentCount !== undefined ? data.commentCount : 'Memuat...';
 
     const formattedTime = formatTimestamp(data.timestamp); 
-    const focusPosition = data.focusPosition || '50% 50%'; // e.g. "55% 45%"
-    const { x: currentX, y: currentY } = parseFocusPosition(focusPosition); // Ambil nilai X dan Y
+    const focusPosition = data.focusPosition || '50% 50%'; 
+    const { x: currentX, y: currentY } = parseFocusPosition(focusPosition); 
     const focusSize = data.focusSize || '100%'; 
     
     const deleteButtonHTML = IS_ADMIN ? 
@@ -375,21 +541,50 @@ function createPostElement(postId, data) {
                  Hapus Post
          </button>` 
         : '';
+        
+    const isPinned = !!data.isPinned;
+    const pinButtonText = isPinned ? 'Lepas Pin 📌' : 'Pin Post';
+    const pinButtonBg = isPinned ? 'var(--accent-color)' : '#718096'; 
+    
+    const pinButtonHTML = IS_ADMIN ? 
+        `<button onclick="pinPost('${postId}', ${isPinned})" 
+                 style="background: ${pinButtonBg}; color: white; border: none; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; cursor: pointer; float: right; margin-left: 10px;">
+                 ${pinButtonText}
+         </button>` 
+        : '';
+        
+    const sanitizedNickname = (data.anonymousNickname || 'Anonim User').replace(/'/g, "\\'");
+    const sanitizedCaption = (data.caption || '').replace(/'/g, "\\'");
 
-    // LOGIKA PERBAIKAN ZOOM KRITIS: Sekarang kita menggunakan Transform: Translate dan Scale
+    // <--- PERUBAHAN 4: Ambil data kelangkaan dan teruskan ke openEditModal
+    const currentRarity = rarity.replace(/'/g, "\\'"); 
+    
+    const editButtonHTML = IS_ADMIN ? 
+        `<button onclick="openEditModal('${postId}', '${sanitizedNickname}', '${sanitizedCaption}', '${currentRarity}')" 
+                 style="background: #38a169; color: white; border: none; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; cursor: pointer; float: right; margin-left: 10px;">
+                 Edit
+         </button>` 
+        : '';
+        
+    const openPostButtonHTML = IS_ADMIN ? 
+        `<button onclick="openAdminModal('${postId}')" 
+                 style="background: #e67e22; color: white; border: none; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; cursor: pointer; float: right; margin-left: 10px;">
+                 Buka Postingan
+         </button>` 
+        : '';
+
+
     const scaleValue = (parseInt(focusSize) / 100).toFixed(2); 
     
-    // Hitung pergeseran (translate) dari pusat (50, 50)
-    // Jika X = 55, artinya fokus bergeser 5% ke kanan (translateX = 5)
     const translateX = currentX - 50; 
     const translateY = currentY - 50; 
 
-    // Gabungkan Translate dan Scale
     let combinedTransform = `translate(${translateX}%, ${translateY}%) scale(${scaleValue})`;
 
     if (scaleValue === '1.00' && translateX === 0 && translateY === 0) {
         combinedTransform = 'none';
     }
+
 
     const focusControlsHTML = IS_ADMIN ? `
         <div class="focus-controls-overlay">
@@ -406,6 +601,9 @@ function createPostElement(postId, data) {
             <p style="margin-top: 10px; font-size: 0.8em; color: white;">Fokus: ${focusPosition} / Zoom: ${focusSize}</p>
         </div>
     ` : '';
+    
+    // BARU: Rarity Badge HTML
+    const rarityBadgeHTML = `<span class="rarity-badge rarity-${rarity.toLowerCase()}">${rarity}</span>`;
 
 
     postDiv.innerHTML = `
@@ -413,9 +611,13 @@ function createPostElement(postId, data) {
             <p style="margin-bottom: 5px;">
                 <strong>${data.anonymousNickname || 'Anonim User'}</strong> 
                 <span style="float: right;">${formattedTime}</span>
-                ${deleteButtonHTML} </p>
+                ${pinButtonHTML}
+                ${deleteButtonHTML} 
+                ${editButtonHTML}
+                ${openPostButtonHTML} </p>
             <p style="margin-top: 5px; font-size: 0.8em; color: var(--accent-color);">
-                <span class="comment-count-display">Memuat...</span>
+                ${rarityBadgeHTML} | ${isPinned ? '<span style="color: var(--admin-color); font-weight: bold;">[PIN]</span> | ' : ''}
+                <span class="comment-count-display">${commentCount} Komentar</span>
             </p>
         </div>
         <div class="media-container">
@@ -431,26 +633,45 @@ function createPostElement(postId, data) {
         </div>
         ${data.caption ? `<div class="post-caption">${data.caption}</div>` : ''}
     `;
-    
-    fetchCommentCount(postId, postDiv);
 
     return postDiv;
 }
 
 
-function initializePagination() {
+async function initializePagination() {
+    if (isLoading) return;
     isLoading = true;
     loadingIndicator.style.display = 'block';
-    loadingIndicator.querySelector('p').textContent = "Menginisialisasi Pagination...";
+    loadingIndicator.querySelector('p').textContent = `Menginisialisasi ${currentSort} Feed (Hanya ID Post)...`;
     mediaFeed.innerHTML = '<h2>Feed Terbaru 🔥</h2>';
+    currentPage = 1; 
 
-    database.ref('posts').orderByKey().once('value', (snapshot) => {
-        postKeys = [];
+    try {
+        const snapshot = await database.ref('posts').once('value');
+        allPostsMinimalData = [];
+
         snapshot.forEach((childSnapshot) => {
-            postKeys.push(childSnapshot.key);
+            const postId = childSnapshot.key;
+            const postData = childSnapshot.val();
+            
+            allPostsMinimalData.push({ 
+                id: postId, 
+                data: { 
+                    timestamp: postData.timestamp,
+                    isPinned: postData.isPinned || false,
+                    rarity: postData.rarity || 'Silver', // BARU: Ambil data rarity
+                    commentCount: 0
+                }
+            });
         });
 
-        postKeys.reverse(); 
+        
+        // 1. Lakukan Pengurutan berdasarkan data minimal (Timestamp, Pin, Rarity)
+        sortPosts(allPostsMinimalData, currentSort);
+
+        // 2. Update postKeys berdasarkan hasil pengurutan
+        postKeys = allPostsMinimalData.map(post => post.id);
+
         totalPosts = postKeys.length;
         totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
@@ -462,18 +683,67 @@ function initializePagination() {
         }
         
         if (currentPage < 1) currentPage = 1;
-        if (currentPage > totalPages) currentPage = totalPages;
+        if (totalPages > 0 && currentPage > totalPages) currentPage = totalPages;
 
         isLoading = false; 
         updatePaginationUI();
         fetchPostsForPage(currentPage);
-    }, (errorObject) => {
-        console.error('Inisialisasi Pagination gagal: ' + errorObject.code);
+
+    } catch (errorObject) {
+        console.error('Inisialisasi Pagination/Sorting gagal: ' + errorObject.code, errorObject);
         isLoading = false;
         loadingIndicator.style.display = 'none';
         mediaFeed.innerHTML = '<p style="text-align: center;">Gagal memuat daftar post.</p>';
+    }
+}
+
+// FUNGSI PENTING: Logika pengurutan (Termasuk Pin Post dan Rarity)
+function sortPosts(postsArray, sortType) {
+    // BARU: Urutan prioritas kelangkaan
+    const rarityOrder = {
+        'legendary': 4,
+        'epic': 3,
+        'gold': 2,
+        'silver': 1
+    };
+
+    postsArray.sort((a, b) => {
+        // Logika Pin Post: Postingan yang di-pin SELALU di urutan teratas
+        const isPinnedA = a.data.isPinned || false;
+        const isPinnedB = b.data.isPinned || false;
+
+        if (isPinnedA && !isPinnedB) return -1; // A (pinned) lebih tinggi dari B
+        if (!isPinnedA && isPinnedB) return 1;  // B (pinned) lebih tinggi dari A
+        
+        // Jika keduanya pinned atau keduanya tidak pinned
+        if (isPinnedA && isPinnedB) {
+             // Jika keduanya di-pin, urutkan berdasarkan waktu posting
+             return b.data.timestamp - a.data.timestamp;
+        }
+
+        // BARU: Sorting berdasarkan Kelangkaan
+        if (sortType === 'rarity') {
+            const rarityA = rarityOrder[a.data.rarity ? a.data.rarity.toLowerCase() : 'silver'] || 0;
+            const rarityB = rarityOrder[b.data.rarity ? b.data.rarity.toLowerCase() : 'silver'] || 0;
+
+            if (rarityB !== rarityA) {
+                return rarityB - rarityA; // Rarity DESC (Legendary > Epic > Gold > Silver)
+            }
+            // Jika kelangkaan sama, fallback ke waktu terbaru
+            return b.data.timestamp - a.data.timestamp;
+        }
+
+        // Sorting Logika Biasa (Waktu)
+        if (sortType === 'latest' || sortType === 'popular') {
+            return b.data.timestamp - a.data.timestamp; // Terbaru DESC
+        } else if (sortType === 'oldest') {
+            return a.data.timestamp - b.data.timestamp; // Terlama ASC
+        } 
+        
+        return 0;
     });
 }
+
 
 async function fetchPostsForPage(page) {
     if (isLoading || totalPosts === 0) return;
@@ -481,14 +751,15 @@ async function fetchPostsForPage(page) {
     isLoading = true;
     mediaFeed.innerHTML = '';
     loadingIndicator.style.display = 'block';
-    loadingIndicator.querySelector('p').textContent = `Memuat halaman ${page} dari ${totalPages}...`;
+    loadingIndicator.querySelector('p').textContent = `Memuat Halaman ${page} (Fetch Konten Post)...`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     const startIndex = (page - 1) * POSTS_PER_PAGE;
     const endIndex = Math.min(startIndex + POSTS_PER_PAGE, totalPosts);
-    const keysForPage = postKeys.slice(startIndex, endIndex);
+    
+    const pagePostKeys = postKeys.slice(startIndex, endIndex);
 
-    if (keysForPage.length === 0) {
+    if (pagePostKeys.length === 0) {
         isLoading = false;
         loadingIndicator.style.display = 'none';
         mediaFeed.innerHTML = '<p style="text-align: center;">Tidak ada media di halaman ini.</p>';
@@ -497,17 +768,19 @@ async function fetchPostsForPage(page) {
     }
 
     try {
-        const postPromises = keysForPage.map(key => 
-            database.ref('posts/' + key).once('value').then(snapshot => ({ id: key, data: snapshot.val() }))
-        );
+        const fetchPromises = pagePostKeys.map(async postId => {
+            const postSnapshot = await database.ref(`posts/${postId}`).once('value');
+            const postData = postSnapshot.val();
+            
+            postData.commentCount = await fetchCommentCount(postId);
+            
+            return { id: postId, data: postData };
+        });
         
-        let postsData = await Promise.all(postPromises);
-        
-        postsData = postsData
-            .filter(post => post.data && post.data.thumbnailUrl && post.data.originalMediaUrl)
-            .sort((a, b) => postKeys.indexOf(a.id) - postKeys.indexOf(b.id)); 
+        const postsDataForPage = await Promise.all(fetchPromises);
 
-        postsData.forEach(post => {
+
+        postsDataForPage.forEach(post => {
             if (!post.data.focusSize) {
                 post.data.focusSize = '100%';
             }
@@ -515,7 +788,7 @@ async function fetchPostsForPage(page) {
             mediaFeed.appendChild(postElement); 
         });
 
-        if (initialPostId && keysForPage.includes(initialPostId)) {
+        if (initialPostId && postsDataForPage.some(p => p.id === initialPostId)) {
             const imgElement = mediaFeed.querySelector(`.media-post[data-id="${initialPostId}"] img`);
             if(imgElement) {
                 openModal(imgElement);
@@ -538,10 +811,16 @@ async function fetchPostsForPage(page) {
 function updatePaginationUI() {
     pageNumbersDisplay.textContent = `Halaman ${currentPage} dari ${totalPages}`;
     prevPageBtn.disabled = currentPage === 1;
-    nextPageBtn.disabled = currentPage === totalPages || totalPosts === 0;
+    nextPageBtn.disabled = currentPage === totalPages || totalPages <= 1 || totalPosts === 0;
     
+    lastPageBtn.disabled = currentPage === totalPages || totalPages <= 1 || totalPosts === 0;
+
     if (totalPosts === 0) {
         pageNumbersDisplay.textContent = "Belum ada media yang diunggah.";
+    }
+    
+    if (currentSort === 'popular' && IS_ADMIN) {
+        pageNumbersDisplay.textContent += " (⚠️ Popularitas: Fallback ke Terbaru)";
     }
 }
 
@@ -558,6 +837,37 @@ nextPageBtn.addEventListener('click', () => {
         fetchPostsForPage(currentPage);
     }
 });
+
+lastPageBtn.addEventListener('click', () => {
+    if (currentPage < totalPages && totalPages > 0) {
+        currentPage = totalPages;
+        fetchPostsForPage(currentPage);
+    }
+});
+
+jumpToPageBtn.addEventListener('click', () => {
+    const pageNum = parseInt(jumpToPageInput.value, 10);
+    
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+        alert(`Masukkan nomor halaman yang valid (1 sampai ${totalPages}).`);
+        jumpToPageInput.value = '';
+        return;
+    }
+    
+    if (pageNum !== currentPage) {
+        currentPage = pageNum;
+        fetchPostsForPage(currentPage);
+    }
+    jumpToPageInput.value = ''; 
+});
+
+
+// EVENT LISTENER UNTUK SORTING
+sortSelect.addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    initializePagination(); 
+});
+
 
 document.addEventListener('DOMContentLoaded', initializePagination);
 
@@ -577,11 +887,9 @@ if (IS_ADMIN) {
 
         if (!imgElement || !overlay) return;
 
-        // Ambil fokus saat ini dari atribut data (bukan lagi dari style.objectPosition)
         let currentX = parseInt(imgElement.getAttribute('data-current-focus-x') || '50');
         let currentY = parseInt(imgElement.getAttribute('data-current-focus-y') || '50');
         
-        // Ambil Zoom dari atribut data
         let currentZoom = parseInt(imgElement.getAttribute('data-current-zoom') || '100'); 
         
         let newX = currentX;
@@ -592,32 +900,26 @@ if (IS_ADMIN) {
 
         switch(action) {
             case 'up':
-                // Y: Nilai berkurang untuk naik (fokus ke atas). BATAS 0/100 DIHAPUS.
                 newY = currentY - FOCUS_STEP;
                 shouldSave = true;
                 break;
             case 'down':
-                // Y: Nilai bertambah untuk turun (fokus ke bawah). BATAS 0/100 DIHAPUS.
                 newY = currentY + FOCUS_STEP;
                 shouldSave = true;
                 break;
             case 'left':
-                // X: Nilai berkurang untuk fokus ke kiri. BATAS 0/100 DIHAPUS.
                 newX = currentX - FOCUS_STEP;
                 shouldSave = true;
                 break;
             case 'right':
-                // X: Nilai bertambah untuk fokus ke kanan. BATAS 0/100 DIHAPUS.
                 newX = currentX + FOCUS_STEP;
                 shouldSave = true;
                 break;
             case 'zoomIn':
-                // Zooming: Menambah ukuran, batasi maks 200% (2x zoom)
                 newZoom = Math.min(200, currentZoom + ZOOM_STEP); 
                 shouldSave = true;
                 break;
             case 'zoomOut':
-                // Zoom Out/Reset: Mengurangi ukuran, batasi min 100% (ukuran normal)
                 newZoom = Math.max(10, currentZoom - ZOOM_STEP);
                 shouldSave = true;
                 break;
@@ -625,20 +927,16 @@ if (IS_ADMIN) {
                 return;
         }
         
-        // Hanya simpan jika ada perubahan
         if (!shouldSave) return;
 
 
-        const newFocus = `${newX}% ${newY}%`; // Format penyimpanan tetap X% Y%
+        const newFocus = `${newX}% ${newY}%`; 
         const scaleValue = (newZoom / 100).toFixed(2);
         const newSizeText = `${newZoom}%`; 
         
-        // Hitung pergeseran (translate) baru
-        // Ini adalah kunci agar pergeseran berfungsi saat di-zoom
         const translateX = newX - 50; 
         const translateY = newY - 50; 
 
-        // Gabungkan Translate dan Scale
         let newTransform = `translate(${translateX}%, ${translateY}%) scale(${scaleValue})`;
 
         if (scaleValue === '1.00' && translateX === 0 && translateY === 0) {
@@ -646,27 +944,23 @@ if (IS_ADMIN) {
         }
 
 
-        // 1. Terapkan gaya baru dan update atribut data
-        // HAPUS: imgElement.style.objectPosition = newFocus;
         imgElement.style.transform = newTransform;
         imgElement.setAttribute('data-current-zoom', newZoom); 
-        imgElement.setAttribute('data-current-focus-x', newX); // Update nilai X baru
-        imgElement.setAttribute('data-current-focus-y', newY); // Update nilai Y baru
+        imgElement.setAttribute('data-current-focus-x', newX); 
+        imgElement.setAttribute('data-current-focus-y', newY); 
 
 
-        // 2. Update teks di overlay (tetap gunakan X% Y%)
         const focusTextDisplay = overlay.querySelector('p');
         if (focusTextDisplay) {
              focusTextDisplay.textContent = `Fokus: ${newFocus} / Zoom: ${newSizeText}`;
         }
 
-        // 3. Simpan ke Database
         savePostFocusAndSizeToDB(postId, newFocus, newSizeText);
     });
 }
 
 
-// --- FUNGSI DELETE POST (Tidak Berubah) ---
+// --- FUNGSI DELETE POST ---
 window.deletePost = function(postId) {
     if (!IS_ADMIN) {
         alert("Akses ditolak. Hanya Admin yang dapat menghapus postingan.");
@@ -680,6 +974,7 @@ window.deletePost = function(postId) {
             })
             .then(() => {
                 alert("Postingan dan semua komentar terkait berhasil dihapus.");
+                allPostsMinimalData = allPostsMinimalData.filter(post => post.id !== postId);
                 initializePagination(); 
             })
             .catch(error => {
@@ -689,7 +984,7 @@ window.deletePost = function(postId) {
     }
 }
 
-// ... (Sisa fungsi modal dan komentar - Tidak Berubah) ...
+// ... (Sisa fungsi modal dan komentar) ...
 
 window.deleteComment = function(postId, commentId) {
     if (!IS_ADMIN) {
@@ -704,10 +999,10 @@ window.deleteComment = function(postId, commentId) {
         })
         .then(() => {
             console.log("Komentar berhasil ditandai sebagai dihapus oleh Admin");
-            const postElement = document.querySelector(`.media-post[data-id="${postId}"]`);
-            if(postElement) {
-                 fetchCommentCount(postId, postElement);
-            }
+            fetchCommentCount(postId).then(count => {
+                updateCommentCountDisplay(postId, count);
+            });
+
             if (currentModalPostId === postId) {
                 loadComments(postId); 
             }
@@ -771,12 +1066,14 @@ window.openModal = function(imgElement) {
     modal.style.display = "block";
     modalImage.src = originalUrl;
     
-    if (!IS_ADMIN) {
-        nicknameInput.value = currentNickname; 
+    if(nicknameInput) nicknameInput.style.display = 'flex'; 
+    
+    if (IS_ADMIN) {
+        if(setNicknameBtn) setNicknameBtn.style.display = 'none'; 
+        nicknameInput.value = sessionStorage.getItem('adminNickname') || 'Administrator'; 
     } else {
-        if(setNicknameBtn) setNicknameBtn.style.display = 'none';
-        if(nicknameInput) nicknameInput.style.display = 'none';
-        if(sessionIdDisplay) sessionIdDisplay.textContent = 'ADMIN';
+        if(setNicknameBtn) setNicknameBtn.style.display = 'flex';
+        nicknameInput.value = currentNickname; 
     }
 
     loadComments(currentModalPostId);
@@ -804,13 +1101,19 @@ commentForm.addEventListener('submit', function(e) {
     const commentText = commentInput.value.trim();
     if (commentText === '') return;
 
-    let finalNickname = currentNickname;
+    let finalNickname;
+    
     if (!IS_ADMIN) {
         finalNickname = nicknameInput.value.trim() || currentNickname;
         sessionStorage.setItem('nickname', finalNickname); 
         currentNickname = finalNickname;
     } else {
-        finalNickname = sessionStorage.getItem('adminNickname') || 'Administrator';
+        const newAdminNickname = nicknameInput.value.trim() || 'Administrator';
+        
+        sessionStorage.setItem('adminNickname', newAdminNickname);
+        currentNickname = newAdminNickname; 
+        
+        finalNickname = newAdminNickname;
     }
     
     const commentData = {
@@ -823,10 +1126,9 @@ commentForm.addEventListener('submit', function(e) {
     database.ref('comments/' + currentModalPostId).push(commentData)
         .then(() => {
             commentInput.value = ''; 
-            const postElement = document.querySelector(`.media-post[data-id="${currentModalPostId}"]`);
-            if(postElement) {
-                 fetchCommentCount(currentModalPostId, postElement);
-            }
+            fetchCommentCount(currentModalPostId).then(count => {
+                updateCommentCountDisplay(currentModalPostId, count);
+            });
         })
         .catch(error => {
             console.error("Gagal mengirim komentar:", error);
