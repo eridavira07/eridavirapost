@@ -1,4 +1,4 @@
-// firebase.js (VERSI BARU: PAGINATION 12 POST/PAGE & PERBAIKAN LOGIKA PEMUATAN)
+// firebase.js (VERSI FINAL: Logika Halaman Khusus Dihapus & Penempatan Post Diperbaiki)
 
 // --- Konfigurasi dan Setup Firebase (Ganti dengan detail Anda!) ---
 const firebaseConfig = {
@@ -54,13 +54,12 @@ const prevPageBtn = document.getElementById('prev-page-btn');
 const nextPageBtn = document.getElementById('next-page-btn');
 const pageNumbersDisplay = document.getElementById('page-numbers-display');
 
-
 // --- Logika Pemeriksaan Kunci Admin ---
 const urlParams = new URLSearchParams(window.location.search);
 const accessKey = urlParams.get('key');
 const ADMIN_KEY = 'admin-eri-2025';
 const IS_ADMIN = accessKey === ADMIN_KEY; 
-const initialPostId = urlParams.get('postid'); // PostID dari notifikasi
+const initialPostId = urlParams.get('postid'); 
 
 
 // --- Variabel Global Status ---
@@ -70,15 +69,15 @@ let currentFocusY = 50;
 const FOCUS_STEP = 5; 
 
 // Pagination Variables
-const POSTS_PER_PAGE = 12; // Maksimal 12 post per halaman
+const POSTS_PER_PAGE = 12; 
 let currentPage = 1;
 let totalPosts = 0;
 let totalPages = 1;
-let postKeys = []; // Array untuk menyimpan semua kunci post, untuk memfasilitasi navigasi
-let isLoading = false; // Digunakan untuk mencegah pemuatan ganda
+let postKeys = []; 
+let isLoading = false; 
 
 
-// --- Otentikasi dan Pengelolaan Sesi Pengguna (TIDAK BERUBAH) ---
+// --- Otentikasi dan Pengelolaan Sesi Pengguna ---
 
 auth.signInAnonymously()
     .then(() => {
@@ -120,11 +119,10 @@ function initializeUserSession() {
     }
 }
 
-// Panggil fungsi inisialisasi
 document.addEventListener('DOMContentLoaded', initializeUserSession);
 
 
-// --- Fungsi Utilitas (TIDAK BERUBAH) ---
+// --- Fungsi Utilitas ---
 function formatTimestamp(timestamp) {
     if (!timestamp) return 'Tanggal tidak diketahui';
     const date = new Date(timestamp);
@@ -137,7 +135,7 @@ function formatTimestamp(timestamp) {
 }
 
 
-// --- 1. Admin UI, Post Submission, dan Header Wallpaper (MODIFIKASI: Setelah Post Baru, kembali ke Halaman 1) ---
+// --- 1. Admin UI, Post Submission, dan Header Wallpaper ---
 
 if (IS_ADMIN) {
     uploadFormContainer.style.display = 'block';
@@ -151,8 +149,7 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
     if (!IS_ADMIN) return;
-    // ... (Logika validasi & pengiriman data tidak berubah) ...
-
+    
     const adminNickname = adminNicknameInput.value.trim();
     const caption = document.getElementById('caption').value;
     const thumbnailUrl = document.getElementById('thumbnail-url').value;
@@ -186,10 +183,8 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
             document.getElementById('thumbnail-url').value = '';
             document.getElementById('original-url').value = '';
             
-            // Pemuatan ulang menggunakan pagination (kembali ke halaman 1)
-            mediaFeed.innerHTML = '<h2>Feed Terbaru 🔥</h2>';
+            // Kembali ke halaman 1 dan muat ulang
             currentPage = 1;
-            // PENTING: Panggil initializePagination untuk me-reset totalKeys dan UI
             initializePagination(); 
         })
         .catch(error => {
@@ -201,8 +196,6 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
             submitBtn.textContent = 'Kirim Anonim';
         });
 });
-
-// ... (Logika Pengaturan Header Wallpaper tidak berubah) ...
 
 const headerConfigRef = database.ref('config/headerWallpaper');
 
@@ -252,8 +245,8 @@ function applyFocus(positionString) {
     currentFocusDisplay.textContent = positionString;
     
     const parts = positionString.split(' ');
-    currentFocusX = parseInt(parts[0]);
-    currentFocusY = parseInt(parts[1]);
+    currentFocusX = parseInt(parts[0].replace('%', ''));
+    currentFocusY = parseInt(parts[1].replace('%', ''));
 }
 
 function saveFocusToDB() {
@@ -322,7 +315,6 @@ if (IS_ADMIN) {
 
 // --- 3. Pagination, Post Display, dan Comment Count ---
 
-// Fungsi untuk Ambil jumlah komentar untuk Post ID tertentu (TIDAK BERUBAH)
 function fetchCommentCount(postId, element) {
     database.ref('comments/' + postId).once('value', (snapshot) => {
         const totalComments = snapshot.numChildren();
@@ -338,14 +330,12 @@ function fetchCommentCount(postId, element) {
 
 
 function createPostElement(postId, data) {
-    // ... (Logika pembuatan elemen post tidak berubah) ...
     const postDiv = document.createElement('div');
     postDiv.className = 'media-post';
     postDiv.setAttribute('data-id', postId);
 
     const formattedTime = formatTimestamp(data.timestamp); 
     
-    // Tombol Hapus Post (Hanya untuk Admin)
     const deleteButtonHTML = IS_ADMIN ? 
         `<button onclick="deletePost('${postId}')" 
                  style="background: var(--deleted-color); color: white; border: none; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; cursor: pointer; float: right; margin-left: 10px;">
@@ -378,27 +368,26 @@ function createPostElement(postId, data) {
     return postDiv;
 }
 
-// Mengambil kunci post dan inisialisasi pagination (TIDAK BERUBAH)
 function initializePagination() {
     isLoading = true;
     loadingIndicator.style.display = 'block';
     loadingIndicator.querySelector('p').textContent = "Menginisialisasi Pagination...";
-    mediaFeed.innerHTML = '<h2>Feed Terbaru 🔥</h2>';
+
+    // Hapus semua elemen post yang ada
+    const postElements = mediaFeed.querySelectorAll('.media-post');
+    postElements.forEach(el => mediaFeed.removeChild(el));
+
 
     database.ref('posts').orderByKey().once('value', (snapshot) => {
         postKeys = [];
         snapshot.forEach((childSnapshot) => {
-            // Memasukkan kunci dari yang terbaru ke terlama
             postKeys.push(childSnapshot.key);
         });
 
-        // Kunci di Firebase RTDB adalah urutan waktu (terlama ke terbaru).
-        // Kita ingin menampilkan post terbaru lebih dulu, jadi array-nya dibalik.
         postKeys.reverse(); 
         totalPosts = postKeys.length;
         totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
-        // Jika ada postid dari URL (dari notifikasi), hitung halaman yang sesuai
         if (initialPostId) {
             const postIndex = postKeys.findIndex(key => key === initialPostId);
             if (postIndex !== -1) {
@@ -406,30 +395,34 @@ function initializePagination() {
             }
         }
         
-        // Pastikan halaman tidak nol atau lebih dari total
         if (currentPage < 1) currentPage = 1;
         if (currentPage > totalPages) currentPage = totalPages;
 
-        isLoading = false; // Penting: Tetapkan isLoading = false di sini agar fetchPostsForPage dapat berjalan
+        isLoading = false; 
         updatePaginationUI();
         fetchPostsForPage(currentPage);
     }, (errorObject) => {
         console.error('Inisialisasi Pagination gagal: ' + errorObject.code);
         isLoading = false;
         loadingIndicator.style.display = 'none';
-        mediaFeed.innerHTML = '<p style="text-align: center;">Gagal memuat daftar post.</p>';
+        mediaFeed.innerHTML += '<p style="grid-column: 1 / -1; text-align: center;">Gagal memuat daftar post.</p>';
     });
 }
 
-// PERBAIKAN UTAMA: Mengambil post untuk halaman tertentu
 async function fetchPostsForPage(page) {
     if (isLoading || totalPosts === 0) return;
 
     isLoading = true;
-    mediaFeed.innerHTML = '';
+    
+    // HAPUS SEMUA POST LAMA SEBELUM MEMUAT YANG BARU
+    const postElements = mediaFeed.querySelectorAll('.media-post');
+    postElements.forEach(el => mediaFeed.removeChild(el));
+
     loadingIndicator.style.display = 'block';
     loadingIndicator.querySelector('p').textContent = `Memuat halaman ${page} dari ${totalPages}...`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    currentPage = page; 
     
     const startIndex = (page - 1) * POSTS_PER_PAGE;
     const endIndex = Math.min(startIndex + POSTS_PER_PAGE, totalPosts);
@@ -438,35 +431,49 @@ async function fetchPostsForPage(page) {
     if (keysForPage.length === 0) {
         isLoading = false;
         loadingIndicator.style.display = 'none';
-        mediaFeed.innerHTML = '<p style="text-align: center;">Tidak ada media di halaman ini.</p>';
+        
+        const feedHeaderControlsWrapper = mediaFeed.querySelector('.feed-header-controls');
+        // Tambahkan pesan "Tidak ada media" setelah wrapper kontrol
+        if (feedHeaderControlsWrapper) {
+            const noMediaMsg = document.createElement('p');
+            noMediaMsg.style.cssText = 'grid-column: 1 / -1; text-align: center; color: #a0aec0;';
+            noMediaMsg.textContent = 'Tidak ada media di halaman ini.';
+            mediaFeed.insertBefore(noMediaMsg, feedHeaderControlsWrapper.nextSibling); 
+        }
         updatePaginationUI();
         return;
     }
 
     try {
-        // Gunakan Promise.all untuk mengambil semua data post secara paralel
         const postPromises = keysForPage.map(key => 
             database.ref('posts/' + key).once('value').then(snapshot => ({ id: key, data: snapshot.val() }))
         );
         
         let postsData = await Promise.all(postPromises);
         
-        // Filter post yang datanya valid dan urutkan kembali sesuai postKeys
         postsData = postsData
             .filter(post => post.data && post.data.thumbnailUrl && post.data.originalMediaUrl)
             .sort((a, b) => postKeys.indexOf(a.id) - postKeys.indexOf(b.id)); 
+        
+        // PENTING: Cari wrapper untuk penyisipan
+        const feedHeaderControlsWrapper = mediaFeed.querySelector('.feed-header-controls');
+        let insertionPoint = feedHeaderControlsWrapper ? feedHeaderControlsWrapper.nextSibling : null;
 
         postsData.forEach(post => {
             const postElement = createPostElement(post.id, post.data);
-            mediaFeed.appendChild(postElement); 
+            
+            // Sisipkan post setelah wrapper header/kontrol
+            if (insertionPoint) {
+                 mediaFeed.insertBefore(postElement, insertionPoint);
+            } else {
+                 mediaFeed.appendChild(postElement); 
+            }
         });
 
-        // Logika untuk membuka modal jika ada initialPostId dari notifikasi
         if (initialPostId && keysForPage.includes(initialPostId)) {
             const imgElement = mediaFeed.querySelector(`.media-post[data-id="${initialPostId}"] img`);
             if(imgElement) {
                 openModal(imgElement);
-                // Bersihkan postid dari URL agar tidak terbuka lagi saat reload
                 urlParams.delete('postid'); 
                 history.replaceState(null, '', 'index.html' + (IS_ADMIN ? `?key=${ADMIN_KEY}` : '')); 
             }
@@ -474,7 +481,7 @@ async function fetchPostsForPage(page) {
 
     } catch (error) {
         console.error("Gagal mengambil post untuk halaman:", error);
-        mediaFeed.innerHTML = '<p style="text-align: center;">Terjadi kesalahan saat memuat media.</p>';
+        mediaFeed.innerHTML += '<p style="grid-column: 1 / -1; text-align: center;">Terjadi kesalahan saat memuat media.</p>';
     } finally {
         isLoading = false;
         loadingIndicator.style.display = 'none';
@@ -483,7 +490,6 @@ async function fetchPostsForPage(page) {
 }
 
 
-// Update tampilan tombol dan teks pagination (TIDAK BERUBAH)
 function updatePaginationUI() {
     pageNumbersDisplay.textContent = `Halaman ${currentPage} dari ${totalPages}`;
     prevPageBtn.disabled = currentPage === 1;
@@ -494,7 +500,7 @@ function updatePaginationUI() {
     }
 }
 
-// Listener untuk Tombol Pagination (TIDAK BERUBAH)
+// Listener untuk Tombol Pagination
 prevPageBtn.addEventListener('click', () => {
     if (currentPage > 1) {
         currentPage--;
@@ -509,11 +515,10 @@ nextPageBtn.addEventListener('click', () => {
     }
 });
 
-// Panggil inisialisasi
 document.addEventListener('DOMContentLoaded', initializePagination);
 
 
-// --- FUNGSI DELETE POST (MODIFIKASI: Panggil initializePagination setelah delete) ---
+// --- FUNGSI DELETE POST ---
 window.deletePost = function(postId) {
     if (!IS_ADMIN) {
         alert("Akses ditolak. Hanya Admin yang dapat menghapus postingan.");
@@ -528,7 +533,6 @@ window.deletePost = function(postId) {
             .then(() => {
                 alert("Postingan dan semua komentar terkait berhasil dihapus.");
                 
-                // PENTING: Muat ulang pagination setelah penghapusan untuk mendapatkan kunci baru
                 initializePagination(); 
             })
             .catch(error => {
@@ -538,9 +542,8 @@ window.deletePost = function(postId) {
     }
 }
 
-// ... (Sisa fungsi modal dan komentar tidak berubah) ...
+// --- FUNGSI KOMENTAR & MODAL ---
 
-// Fungsi untuk menghapus komentar (Soft Delete oleh Admin)
 window.deleteComment = function(postId, commentId) {
     if (!IS_ADMIN) {
         alert("Akses ditolak. Hanya Admin yang dapat menghapus komentar.");
@@ -558,7 +561,6 @@ window.deleteComment = function(postId, commentId) {
             if(postElement) {
                  fetchCommentCount(postId, postElement);
             }
-            // Muat ulang komentar modal jika sedang terbuka
             if (currentModalPostId === postId) {
                 loadComments(postId); 
             }
@@ -567,7 +569,6 @@ window.deleteComment = function(postId, commentId) {
     }
 }
 
-// Fungsi untuk memuat komentar (Menggunakan 'value' listener)
 function loadComments(postId) {
     database.ref('comments/' + postId).off(); 
     commentsList.innerHTML = ''; 
@@ -617,18 +618,15 @@ function loadComments(postId) {
     });
 }
 
-// Logika Buka Modal
 window.openModal = function(imgElement) {
     currentModalPostId = imgElement.getAttribute('data-post-id'); 
     const originalUrl = imgElement.getAttribute('data-original-url');
     modal.style.display = "block";
     modalImage.src = originalUrl;
     
-    // Setup UI Modal
     if (!IS_ADMIN) {
         nicknameInput.value = currentNickname; 
     } else {
-        // Sembunyikan input nickname dan tombol set untuk Admin di modal
         if(setNicknameBtn) setNicknameBtn.style.display = 'none';
         if(nicknameInput) nicknameInput.style.display = 'none';
         if(sessionIdDisplay) sessionIdDisplay.textContent = 'ADMIN';
@@ -637,7 +635,6 @@ window.openModal = function(imgElement) {
     loadComments(currentModalPostId);
 }
 
-// Menangani perubahan nickname dari user biasa
 if (!IS_ADMIN && setNicknameBtn) {
     setNicknameBtn.addEventListener('click', function() {
         const newNickname = nicknameInput.value.trim();
@@ -651,8 +648,6 @@ if (!IS_ADMIN && setNicknameBtn) {
     });
 }
 
-
-// Mengirim Komentar
 commentForm.addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -663,12 +658,10 @@ commentForm.addEventListener('submit', function(e) {
 
     let finalNickname = currentNickname;
     if (!IS_ADMIN) {
-        // User biasa menggunakan nickname dari input modal (jika diubah)
         finalNickname = nicknameInput.value.trim() || currentNickname;
         sessionStorage.setItem('nickname', finalNickname); 
         currentNickname = finalNickname;
     } else {
-        // Admin menggunakan nickname yang terakhir digunakan dari session
         finalNickname = sessionStorage.getItem('adminNickname') || 'Administrator';
     }
     
@@ -694,7 +687,6 @@ commentForm.addEventListener('submit', function(e) {
 });
 
 
-// Tutup modal ketika tombol 'x' diklik
 closeBtn.onclick = function() {
     modal.style.display = "none";
     modalImage.src = ''; 
@@ -703,7 +695,6 @@ closeBtn.onclick = function() {
     currentModalPostId = null; 
 }
 
-// Tutup modal ketika pengguna mengklik di luar wrapper konten modal
 window.onclick = function(event) {
     if (event.target == modal) {
         modal.style.display = "none";

@@ -23,96 +23,93 @@
     </header>
 
     <main>
-        <section id="upload-form-container">
+        
+        <section id="upload-form-container" style="display: none;">
             
             <div id="header-settings-panel">
-                <h2>Pengaturan Header Dinding</h2>
+                <h2>Pengaturan Header Dinding (Admin Only)</h2>
                 <form id="wallpaper-setting-form">
                     <input type="url" id="wallpaper-link" placeholder="Link Gambar Dinding Header" required>
+                    <div id="focus-control-panel" class="focus-controls" style="display: none;">
+                        <p>Fokus Dinding Saat Ini: <span id="current-focus-display">50% 50%</span></p>
+                        <div class="control-grid">
+                            <button type="button" id="focus-up">↑</button>
+                            <button type="button" id="focus-left">←</button>
+                            <button type="button" id="focus-reset">Reset</button>
+                            <button type="button" id="focus-right">→</button>
+                            <button type="button" id="focus-down">↓</button>
+                        </div>
+                    </div>
                     <button type="submit" id="set-wallpaper-btn">Ganti Dinding</button>
                 </form>
-
-                <div id="focus-control-panel" class="control-panel">
-                    <h3>Atur Fokus Header</h3>
-                    <p>Posisi: <span id="current-focus-display">center center</span></p>
-                    <div class="focus-buttons">
-                        <button id="focus-up">⬆️</button>
-                        <div class="mid-row">
-                            <button id="focus-left">⬅️</button>
-                            <button id="focus-reset">⚫</button>
-                            <button id="focus-right">➡️</button>
-                        </div>
-                        <button id="focus-down">⬇️</button>
-                    </div>
-                </div>
             </div>
-
-            <hr style="border-color: var(--border-color); margin: 20px 0;">
-
-            <h2>Unggah Media Baru ke Feed</h2>
+            
+            <h2>Unggah Media Baru (Admin Only)</h2>
             <form id="media-form">
-                <input type="text" id="admin-nickname-input" placeholder="Nama yang akan ditampilkan (Wajib Admin)" required> 
-                
-                <input type="text" id="caption" placeholder="Caption/Keterangan (Opsional)">
-                <input type="url" id="thumbnail-url" placeholder="Link Thumbnail (Wajib)" required>
-                <input type="url" id="original-url" placeholder="Link Media Asli (Wajib)" required>
+                <input type="text" id="admin-nickname-input" placeholder="Nama Admin" value="Administrator" required>
+                <input type="url" id="thumbnail-url" placeholder="Link Thumbnail (Contoh: 300x300)" required>
+                <input type="url" id="original-url" placeholder="Link Media Asli (Contoh: 1280x720)" required>
+                <textarea id="caption" placeholder="Keterangan (Opsional)"></textarea>
                 <button type="submit" id="submit-btn">Kirim Anonim</button>
             </form>
         </section>
-        
+
         <section id="media-feed">
-            <h2>Feed Terbaru 🔥</h2>
-        </section>
+            <div class="feed-header-controls">
+                <h2>Feed Terbaru 🔥</h2>
+                
+                <div id="quick-nav-controls" class="quick-nav-controls">
+                    <a href="https://eridavira07.github.io/eridavirapost/futa.html" id="goto-page-1-link" class="quick-nav-btn">Futanari</a>
+                </div>
+            </div>
+            
+            </section>
+
+        <div id="loading-indicator" class="loading-indicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>Memuat...</p>
+        </div>
 
         <div id="pagination-controls" class="pagination-controls">
-            <button id="prev-page-btn" disabled>&larr; Prev</button>
-            <span id="page-numbers-display">Halaman 1</span>
-            <button id="next-page-btn" disabled>Next &rarr;</button>
+            <button id="prev-page-btn" disabled>← Sebelumnya</button>
+            <span id="page-numbers-display">Halaman 1 dari 1</span>
+            <button id="next-page-btn" disabled>Selanjutnya →</button>
         </div>
-        <div id="loading-indicator" style="text-align: center; padding: 20px 0; color: #a0aec0; display: none;">
-            <p>Memuat lebih banyak media...</p>
-        </div>
+        
     </main>
 
-    
     <div id="media-modal" class="modal">
-        <span class="close-btn">&times;</span>
-        <div class="modal-content-wrapper">
-            <div class="modal-image-container">
-                <img class="modal-content" id="modal-image">
-            </div>
-            <div class="modal-comments-section">
-                <h3>Komentar</h3>
-                <div id="nickname-container" style="padding-bottom: 15px; border-bottom: 1px solid #4a5568;">
-                    <p style="margin: 0 0 5px 0; font-size: 0.9em; color: #a0aec0;">ID Sesi Anda: <span id="session-id-display">Memuat...</span></p>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="nickname-input" placeholder="Masukkan Nama Anda" style="flex-grow: 1;">
-                        <button type="button" id="set-nickname-btn">Set Nama</button>
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-content-wrapper">
+                
+                <div class="modal-image-container">
+                    <img id="modal-image" src="" alt="Media Asli">
+                </div>
+
+                <div class="modal-comments-section">
+                    <h3>Komentar</h3>
+                    
+                    <div class="user-session-info" style="border-bottom: 1px solid #4a5568;">
+                        <p style="margin: 0 0 5px 0; font-size: 0.9em; color: #a0aec0;">ID Sesi Anda: <span id="session-id-display">Memuat...</span></p>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="nickname-input" placeholder="Masukkan Nama Anda" style="flex-grow: 1;">
+                            <button type="button" id="set-nickname-btn">Set Nama</button>
+                        </div>
                     </div>
+                    
+                    <div id="comments-list" class="comments-list" style="margin-top: 15px;">
+                        </div>
+                    
+                    <form id="comment-form" class="comment-form">
+                        <input type="text" id="comment-input" placeholder="Tulis komentar Anda..." required>
+                        <button type="submit">Kirim</button>
+                    </form>
                 </div>
-                <div id="comments-list" class="comments-list" style="margin-top: 15px;">
-                </div>
-                <form id="comment-form" class="comment-form">
-                    <input type="text" id="comment-input" placeholder="Tulis komentar Anda..." required>
-                    <button type="submit">Kirim</button>
-                </form>
             </div>
         </div>
     </div>
 
     <script src="firebase.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const userId = sessionStorage.getItem('userId');
-            const sessionIdDisplay = document.getElementById('session-id-display');
-            
-            if (sessionIdDisplay && userId) {
-                sessionIdDisplay.textContent = userId.substring(0, 8).toUpperCase();
-            } else if (sessionIdDisplay) {
-                sessionIdDisplay.textContent = 'Memuat...'; 
-            }
-        });
-    </script>
 </body>
 </html>
