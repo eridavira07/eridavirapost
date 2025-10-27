@@ -122,23 +122,39 @@ let currentNickname = sessionStorage.getItem('nickname');
 function initializeUserSession() {
     document.body.className = IS_ADMIN ? 'admin-mode' : ''; 
     
-    if (!currentUserId) {
-        currentUserId = Date.now().toString();
-        currentNickname = "Anonim User";
-        
-        sessionStorage.setItem('userId', currentUserId);
-        sessionStorage.setItem('nickname', currentNickname);
-    }
-    
+    // 1. Logika Administrasi (IS_ADMIN = true)
     if (IS_ADMIN) {
         currentUserId = 'admin_eri_' + (auth.currentUser ? auth.currentUser.uid.substring(0, 8) : 'loading'); 
         currentNickname = sessionStorage.getItem('adminNickname') || 'Administrator'; 
         
-        sessionStorage.setItem('userId', currentUserId); 
+        sessionStorage.setItem('userId', currentUserId); // Timpa ID anonim
         sessionStorage.setItem('nickname', currentNickname); 
         sessionStorage.setItem('adminNickname', currentNickname); 
-    } else {
-        currentNickname = sessionStorage.getItem('nickname');
+        
+    } 
+    
+    // 2. Logika Non-Admin (Perbaikan Bug: me-reset ID Admin yang tersimpan)
+    // Jika BUKAN Admin DAN (ID belum ada ATAU ID yang tersimpan adalah Admin ID)
+    else if (!currentUserId || currentUserId.startsWith('admin_eri_')) {
+        
+        // Force reset dan buat ID non-admin baru yang jelas
+        currentUserId = 'anonim_user_' + Date.now().toString(); 
+        // Pertahankan nickname yang mungkin sudah diatur user, jika tidak gunakan 'Anonim User'
+        currentNickname = sessionStorage.getItem('nickname') || "Anonim User"; 
+        
+        sessionStorage.setItem('userId', currentUserId);
+        sessionStorage.setItem('nickname', currentNickname);
+        
+        // Hapus sisa nickname admin
+        if (sessionStorage.getItem('adminNickname')) {
+             sessionStorage.removeItem('adminNickname');
+        }
+    } 
+    // Kasus else: Non-Admin dan sudah memiliki ID Anonim yang valid. currentUserId dan currentNickname sudah benar.
+    
+    // Pastikan currentNickname global diperbarui jika tidak diatur ulang di atas (untuk kasus Non-Admin yang sudah memiliki ID anonim lama)
+    if (!IS_ADMIN && !currentNickname) {
+         currentNickname = sessionStorage.getItem('nickname');
     }
 
     if (sessionIdDisplay) {
@@ -818,6 +834,7 @@ function loadComments(postId) {
                 commentDiv.className = 'comment-item';
                 
                 // --- KODE PERBAIKAN WARNA ADMIN DIMULAI DI SINI ---
+                // Logika pewarnaan mengandalkan pada ID Admin yang berawalan 'admin_eri_'
                 const isCommentByAdmin = comment.userId && comment.userId.startsWith('admin_eri_');
                 
                 // Tentukan kelas admin (INI SELALU BERJALAN)

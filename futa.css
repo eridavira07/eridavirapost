@@ -587,3 +587,27 @@ main {
         max-width: 100%;
     }
 }
+
+/* Tambahkan kode ini ke file futa.css */
+
+#filter-buttons {
+    display: flex; /* 1. Mengaktifkan Flexbox agar item sejajar horizontal */
+    flex-direction: row; /* Opsional, namun memastikan item berderet dari kiri ke kanan */
+    justify-content: flex-start; /* 2. Mensejajarkan semua item ke sisi KIRI */
+    
+    /* Tambahkan style tambahan berikut untuk tampilan yang lebih baik */
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Style untuk memberikan jarak antar tombol */
+.nav-button {
+    margin-right: 15px; /* Memberikan jarak di antara setiap tombol */
+    /* Pastikan tombol Anda memiliki style dasar yang baik */
+    padding: 8px 15px;
+    background-color: var(--accent-color); /* Contoh dari futa.css Anda */
+    color: var(--bg-color); /* Contoh dari futa.css Anda */
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+}
