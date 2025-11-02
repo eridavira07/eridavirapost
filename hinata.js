@@ -1,15 +1,15 @@
-// firebase.js (VERSI FINAL + NEWS TICKER)
+// firebase.js (VERSI FINAL: Logika Halaman Khusus Dihapus & Penempatan Post Diperbaiki)
 
 // --- Konfigurasi dan Setup Firebase (Ganti dengan detail Anda!) ---
 const firebaseConfig = {
-    apiKey: "AIzaSyC7RcZAU0-KP87xnguAHqbC_Oo5lm2QAaA",
-    authDomain: "fellas-df5db.firebaseapp.com",
-    databaseURL: "https://fellas-df5db-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "fellas-df5db",
-    storageBucket: "fellas-df5db.firebasestorage.app",
-    messagingSenderId: "402251127439",
-    appId: "1:402251127439:web:5be2526b16d79493506efa",
-    measurementId: "G-QK45YN28QZ"
+    apiKey: "AIzaSyB_bbPObSFS_nUIzRZGxpmzN1EMjLyuUKs",
+    authDomain: "hinata-aae4a.firebaseapp.com",
+    databaseURL: "https://hinata-aae4a-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "hinata-aae4a",
+    storageBucket: "hinata-aae4a.firebasestorage.app",
+    messagingSenderId: "396654574533",
+    appId: "1:396654574533:web:bea6861766765fb975e9ac",
+    measurementId: "G-ZVYRC5SFV5"
 };
 
 if (!firebase.apps.length) {
@@ -35,8 +35,8 @@ const sessionIdDisplay = document.getElementById('session-id-display');
 
 // Input Nickname Admin
 const adminNicknameInput = document.getElementById('admin-nickname-input');
-const imgboxLinkInput = document.getElementById('imgbox-link'); 
-const mediaForm = document.getElementById('media-form'); 
+const imgboxLinkInput = document.getElementById('imgbox-link'); // <-- BARIS BARU: ELEMEN IMGBOX
+const mediaForm = document.getElementById('media-form'); // <-- BARIS BARU: ELEMEN FORM
 
 // Header Wallpaper Elements
 const wallpaperSettingForm = document.getElementById('wallpaper-setting-form');
@@ -56,19 +56,6 @@ const prevPageBtn = document.getElementById('prev-page-btn');
 const nextPageBtn = document.getElementById('next-page-btn');
 const pageNumbersDisplay = document.getElementById('page-numbers-display');
 
-// ==============================================
-// [BARU] ELEMEN NEWS TICKER
-// ==============================================
-const newsTickerBar = document.getElementById('news-ticker-bar');
-const tickerTextScroll = document.getElementById('ticker-text-scroll');
-const toggleTickerBtn = document.getElementById('toggle-ticker-btn');
-const newsTextInput = document.getElementById('news-text-input');
-const saveNewsBtn = document.getElementById('save-news-btn');
-const addNewsForm = document.getElementById('add-news-form');
-const activeNewsList = document.getElementById('active-news-list');
-// ==============================================
-
-
 // --- Logika Pemeriksaan Kunci Admin ---
 const urlParams = new URLSearchParams(window.location.search);
 const accessKey = urlParams.get('key');
@@ -82,7 +69,6 @@ let currentModalPostId = null;
 let currentFocusX = 50; 
 let currentFocusY = 50; 
 const FOCUS_STEP = 5; 
-let newsList = []; // Daftar Berita untuk Ticker
 
 // Pagination Variables
 const POSTS_PER_PAGE = 52; 
@@ -91,7 +77,6 @@ let totalPosts = 0;
 let totalPages = 1;
 let postKeys = []; 
 let isLoading = false; 
-let isEditingNewsId = null; // ID Berita yang sedang di Edit
 
 
 // --- Otentikasi dan Pengelolaan Sesi Pengguna ---
@@ -160,6 +145,7 @@ function convertImgboxLink(imgboxUrl) {
     if (!imgboxUrl || typeof imgboxUrl !== 'string') return null;
 
     // Regex untuk mencocokkan pola Imgbox: thumbs[X].imgbox.com/[XX]/[XX]/[ID]_[b|o|t].jpg
+    // Kita mencari pola /[ID]_[b|t].jpg
     const regex = /imgbox\.com\/(.+?)\/([a-zA-Z0-9]+)_[bt]\.jpg/i;
     const match = imgboxUrl.match(regex);
 
@@ -189,6 +175,7 @@ if (IS_ADMIN) {
     // --- Fungsionalitas Auto-Paste saat Fokus DITAMBAHKAN DI SINI ---
     
     async function autoPasteAndSubmit(inputElement, formElement) {
+        // PERINGATAN: Membutuhkan izin dari pengguna/browser (biasanya ada pop-up)
         if (!navigator.clipboard || !navigator.clipboard.readText) {
             console.warn("Clipboard API tidak didukung atau konteks tidak aman.");
             return;
@@ -197,13 +184,19 @@ if (IS_ADMIN) {
         try {
             const clipboardText = await navigator.clipboard.readText();
             
+            // Cek apakah teks clipboard terlihat seperti link imgbox
             if (clipboardText.startsWith('http') && clipboardText.includes('imgbox.com')) {
                 inputElement.value = clipboardText;
                 console.log("Link Imgbox otomatis ditempel.");
                 
+                // 1. Pemicu Event 'change' secara manual untuk menjalankan convertImgboxLink
                 inputElement.dispatchEvent(new Event('change'));
                 
+                // 2. Langsung Submit Form
+                console.log("Formulir otomatis dikirim.");
+                // Menggunakan setTimeout untuk memberi waktu bagi browser memproses event 'change' sebelum submit
                 setTimeout(() => {
+                    // Cek lagi link sudah terisi sebelum submit
                     if (document.getElementById('thumbnail-url').value && document.getElementById('original-url').value) {
                          formElement.dispatchEvent(new Event('submit', { bubbles: true }));
                     } else {
@@ -212,6 +205,7 @@ if (IS_ADMIN) {
                 }, 50); 
             }
         } catch (err) {
+            // Ini akan menangkap jika izin ditolak oleh browser/pengguna
             console.error('Gagal membaca clipboard, izin ditolak atau tidak ada teks di clipboard:', err);
         }
     }
@@ -235,6 +229,7 @@ if (IS_ADMIN) {
                     document.getElementById('thumbnail-url').value = convertedLinks.thumbnailUrl;
                     document.getElementById('original-url').value = convertedLinks.originalUrl;
                 } else {
+                    // Tidak perlu alert jika auto-paste gagal, hanya saat input manual
                     if (!this.getAttribute('data-autopaste-triggered')) {
                         alert("Format link Imgbox tidak valid! Pastikan itu adalah link thumbnail Imgbox (*_b.jpg atau *_t.jpg).");
                     }
@@ -283,11 +278,13 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
 
     database.ref('posts').push(postData)
         .then(() => {
+            // Hentikan notifikasi jika submit otomatis (opsional)
+            // if (!e.isTrusted) return; 
             
             alert('Media berhasil diunggah! Memuat Feed Baru...');
             
             // Bersihkan input setelah unggah
-            document.getElementById('imgbox-link').value = ''; 
+            document.getElementById('imgbox-link').value = ''; // <-- Bersihkan input Imgbox
             document.getElementById('caption').value = ''; 
             document.getElementById('thumbnail-url').value = '';
             document.getElementById('original-url').value = '';
@@ -422,167 +419,7 @@ if (IS_ADMIN) {
 }
 
 
-// --- 2. [BARU] Logika News Ticker (Berita Berjalan) ---
-
-const newsRef = database.ref('config/newsTicker');
-
-/**
- * Membuat dan menjalankan animasi News Ticker
- * @param {Array<string>} newsArray Array teks berita
- */
-function displayNewsTicker(newsArray) {
-    if (newsArray.length === 0) {
-        newsTickerBar.style.display = 'none';
-        return;
-    }
-    
-    // Gabungkan semua berita menjadi satu string panjang
-    const combinedText = newsArray.map(n => n.text).join(' | '); 
-    
-    tickerTextScroll.innerHTML = `<span>${combinedText}</span>`;
-    
-    const span = tickerTextScroll.querySelector('span');
-    
-    // Perkirakan durasi animasi berdasarkan panjang teks (misalnya 0.2 detik per karakter)
-    const textLength = combinedText.length;
-    const animationDuration = Math.max(15, textLength * 0.2) + 's'; 
-    
-    // Atur ulang animasi
-    span.style.animation = 'none';
-    span.offsetHeight; // Memaksa reflow
-    span.style.animation = `ticker ${animationDuration} linear infinite`;
-    
-    newsTickerBar.style.display = 'flex';
-}
-
-function loadNewsFromDB() {
-    newsRef.once('value', (snapshot) => {
-        newsList = [];
-        snapshot.forEach((childSnapshot) => {
-            newsList.push({ id: childSnapshot.key, text: childSnapshot.val().text });
-        });
-        
-        // Filter berita yang mungkin kosong atau tidak valid
-        newsList = newsList.filter(n => n.text && n.text.trim() !== "");
-
-        // Tampilkan News Ticker di UI
-        displayNewsTicker(newsList); 
-        
-        // Muat daftar berita untuk panel Admin
-        if (IS_ADMIN) {
-            renderAdminNewsList(newsList);
-        }
-    });
-}
-
-// Handler untuk tombol tutup/buka News Ticker
-if (toggleTickerBtn) {
-    toggleTickerBtn.addEventListener('click', function() {
-        if (newsTickerBar.style.display === 'flex') {
-            newsTickerBar.style.display = 'none';
-            document.body.style.paddingTop = '0';
-        } else if (newsList.length > 0) {
-            newsTickerBar.style.display = 'flex';
-            document.body.style.paddingTop = '40px'; 
-        }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', loadNewsFromDB);
-
-
-// --- [BARU] Logika Admin Panel Berita ---
-
-if (IS_ADMIN) {
-    
-    // Fungsi untuk merender daftar berita di panel admin
-    function renderAdminNewsList(news) {
-        activeNewsList.innerHTML = '';
-        news.forEach(item => {
-            const listItem = document.createElement('li');
-            listItem.setAttribute('data-id', item.id);
-            listItem.innerHTML = `
-                <span class="news-text-display">${item.text}</span>
-                <div class="news-actions">
-                    <button class="edit-btn" onclick="editNews('${item.id}', '${item.text.replace(/'/g, "\\'")}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteNews('${item.id}')">Hapus</button>
-                </div>
-            `;
-            activeNewsList.appendChild(listItem);
-        });
-    }
-    
-    // Listener untuk formulir Tambah/Edit Berita
-    addNewsForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const text = newsTextInput.value.trim();
-        if (!text) return;
-        
-        saveNewsBtn.disabled = true;
-        
-        if (isEditingNewsId) {
-            // Mode Edit
-            newsRef.child(isEditingNewsId).update({ text: text, timestamp: firebase.database.ServerValue.TIMESTAMP })
-                .then(() => {
-                    alert('Berita berhasil diperbarui!');
-                    isEditingNewsId = null;
-                    saveNewsBtn.textContent = 'Tambah Berita';
-                    newsTextInput.value = '';
-                    loadNewsFromDB(); // Muat ulang Ticker dan Admin List
-                })
-                .catch(error => {
-                    console.error("Gagal memperbarui berita:", error);
-                    alert('Gagal memperbarui berita.');
-                })
-                .finally(() => {
-                    saveNewsBtn.disabled = false;
-                });
-        } else {
-            // Mode Tambah Baru
-            newsRef.push({ text: text, timestamp: firebase.database.ServerValue.TIMESTAMP })
-                .then(() => {
-                    alert('Berita berhasil ditambahkan!');
-                    newsTextInput.value = '';
-                    loadNewsFromDB(); // Muat ulang Ticker dan Admin List
-                })
-                .catch(error => {
-                    console.error("Gagal menambah berita:", error);
-                    alert('Gagal menambah berita.');
-                })
-                .finally(() => {
-                    saveNewsBtn.disabled = false;
-                });
-        }
-    });
-    
-    // Fungsi untuk memulai mode Edit
-    window.editNews = function(id, text) {
-        isEditingNewsId = id;
-        newsTextInput.value = text;
-        saveNewsBtn.textContent = 'Simpan Perubahan';
-        // Gulir ke atas ke formulir
-        newsTextInput.scrollIntoView({ behavior: 'smooth' });
-        newsTextInput.focus();
-    }
-    
-    // Fungsi untuk menghapus berita
-    window.deleteNews = function(id) {
-        if (confirm("Yakin ingin menghapus berita ini?")) {
-            newsRef.child(id).remove()
-                .then(() => {
-                    alert('Berita berhasil dihapus.');
-                    loadNewsFromDB(); // Muat ulang Ticker dan Admin List
-                })
-                .catch(error => {
-                    console.error("Gagal menghapus berita:", error);
-                    alert('Gagal menghapus berita.');
-                });
-        }
-    }
-}
-
-
-// --- 3. Pagination, Post Display, dan Comment Count (TIDAK BERUBAH) ---
+// --- 3. Pagination, Post Display, dan Comment Count ---
 
 function fetchCommentCount(postId, element) {
     database.ref('comments/' + postId).once('value', (snapshot) => {
@@ -811,7 +648,7 @@ window.deletePost = function(postId) {
     }
 }
 
-// --- FUNGSI KOMENTAR & MODAL (TIDAK BERUBAH) ---
+// --- FUNGSI KOMENTAR & MODAL ---
 
 window.deleteComment = function(postId, commentId) {
     if (!IS_ADMIN) {
