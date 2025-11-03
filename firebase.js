@@ -1,8 +1,8 @@
-// firebase.js (VERSI FINAL: Logika Halaman Khusus Dihapus & Penempatan Post Diperbaiki)
+// firebase.js (VERSI FINAL: Dilengkapi dengan Unggahan Media Massal BBCode)
 
 // --- Konfigurasi dan Setup Firebase (Ganti dengan detail Anda!) ---
 const firebaseConfig = {
-    apiKey: "AIzaSyC6eQQ5KmfNeE-MbbGztfgvUr-Q388K",
+    apiKey: "AIzaSyC6eQQ5mfNeE-MbbGztfgvUr-Q388K",
     authDomain: "anon-chat-eri.firebaseapp.com",
     databaseURL: "https://anon-chat-eri-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "anon-chat-eri",
@@ -35,6 +35,8 @@ const sessionIdDisplay = document.getElementById('session-id-display');
 
 // Input Nickname Admin
 const adminNicknameInput = document.getElementById('admin-nickname-input');
+const imgboxLinkInput = document.getElementById('imgbox-link'); 
+const mediaForm = document.getElementById('media-form'); 
 
 // Header Wallpaper Elements
 const wallpaperSettingForm = document.getElementById('wallpaper-setting-form');
@@ -54,6 +56,31 @@ const prevPageBtn = document.getElementById('prev-page-btn');
 const nextPageBtn = document.getElementById('next-page-btn');
 const pageNumbersDisplay = document.getElementById('page-numbers-display');
 
+// ==============================================
+// [BARU] ELEMEN NEWS TICKER
+// ==============================================
+const newsTickerBar = document.getElementById('news-ticker-bar');
+const tickerTextScroll = document.getElementById('ticker-text-scroll');
+const toggleTickerBtn = document.getElementById('toggle-ticker-btn');
+const newsTextInput = document.getElementById('news-text-input');
+const saveNewsBtn = document.getElementById('save-news-btn');
+const addNewsForm = document.getElementById('add-news-form');
+const activeNewsList = document.getElementById('active-news-list');
+// ==============================================
+
+// ==============================================
+// [BARU DITAMBAHKAN] Elemen Unggahan Massal BBCode
+// Pastikan elemen-elemen ini ada di index.html Anda
+// ==============================================
+const bulkMediaForm = document.getElementById('bulk-media-form');
+const bulkAdminNicknameInput = document.getElementById('bulk-admin-nickname-input');
+const bulkImgboxLinksInput = document.getElementById('bulk-imgbox-links');
+const bulkCaptionInput = document.getElementById('bulk-caption');
+const bulkSubmitBtn = document.getElementById('bulk-submit-btn');
+const bulkUploadStatus = document.getElementById('bulk-upload-status');
+// ==============================================
+
+
 // --- Logika Pemeriksaan Kunci Admin ---
 const urlParams = new URLSearchParams(window.location.search);
 const accessKey = urlParams.get('key');
@@ -67,14 +94,16 @@ let currentModalPostId = null;
 let currentFocusX = 50; 
 let currentFocusY = 50; 
 const FOCUS_STEP = 5; 
+let newsList = []; // Daftar Berita untuk Ticker
 
 // Pagination Variables
-const POSTS_PER_PAGE = 12; 
+const POSTS_PER_PAGE = 52; 
 let currentPage = 1;
 let totalPosts = 0;
 let totalPages = 1;
 let postKeys = []; 
 let isLoading = false; 
+let isEditingNewsId = null; // ID Berita yang sedang di Edit
 
 
 // --- Otentikasi dan Pengelolaan Sesi Pengguna ---
@@ -134,17 +163,161 @@ function formatTimestamp(timestamp) {
     return date.toLocaleString('id-ID', options);
 }
 
+/**
+ * Mengkonversi link thumbnail Imgbox menjadi Link Asli dan Thumbnail yang benar.
+ * @param {string} imgboxUrl Link dari Imgbox, cth: https://thumbs2.imgbox.com/76/bc/jQPtXSfw_b.jpg
+ * @returns {{thumbnailUrl: string, originalUrl: string} | null}
+ */
+function convertImgboxLink(imgboxUrl) {
+    if (!imgboxUrl || typeof imgboxUrl !== 'string') return null;
+
+    // Regex untuk mencocokkan pola Imgbox: thumbs[X].imgbox.com/[XX]/[XX]/[ID]_[b|o|t].jpg
+    // Catatan: Imgbox juga bisa menggunakan ekstensi lain (PNG, GIF).
+    const regex = /imgbox\.com\/(.+?)\/([a-zA-Z0-9]+)_[bt]\.(jpg|jpeg|png|gif)/i;
+    const match = imgboxUrl.match(regex);
+
+    if (match && match[2]) {
+        const id = match[2];
+        const pathPart = match[1] + '/' + id;
+        
+        // Link Original: Menggunakan domain images2 dan suffix _o.jpg (Ini mungkin perlu penyesuaian jika media aslinya PNG)
+        // Namun, kita akan tetap mengikuti pola konversi Imgbox standar: 
+        // Original Imgbox URL biasanya memiliki suffix _o dan menggunakan ekstensi asli, 
+        // tapi link yang diberikan Imgbox saat ini sering kali memiliki ekstensi tunggal.
+        // Untuk amannya, kita paksa ekstensi .jpg atau .png berdasarkan input.
+        const originalExt = match[3];
+        
+        // Asumsi standar Imgbox untuk link original adalah _o.
+        const originalUrl = `https://images2.imgbox.com/${pathPart}_o.${originalExt}`;
+        const thumbnailUrl = imgboxUrl; 
+        
+        return { thumbnailUrl, originalUrl };
+    }
+    
+    return null;
+}
+
+/**
+ * Menguraikan string BBCode massal dan mengembalikan array objek link.
+ * @param {string} bbCodeText String BBCode dari textarea.
+ * @returns {Array<{thumbnailUrl: string, originalMediaUrl: string}>} Array post data yang sudah dikonversi.
+ */
+function parseBBCodeLinks(bbCodeText) {
+    const postDataArray = [];
+    
+    // --- FIX DITERAPKAN DI SINI ---
+    // Regex diperbarui untuk mencocokkan .jpg, .jpeg, .png, dan .gif pada link thumbnail Imgbox.
+    // Pola: [URL=https://imgbox.com/ID][IMG]https://thumbs[X].imgbox.com/xx/xx/ID_[b|t].(jpg|png)[/IMG][/URL]
+    const bbCodeRegex = /\[URL=(https:\/\/imgbox\.com\/[a-zA-Z0-9]+)\]\[IMG\](https:\/\/thumbs\d+\.imgbox\.com\/[a-f0-9]{2}\/[a-f0-9]{2}\/[a-zA-Z0-9]+_[bot]\.(jpg|jpeg|png|gif))\[\/IMG\]\[\/URL\]/g;
+    
+    let match;
+    // Loop melalui semua kecocokan BBCode
+    while ((match = bbCodeRegex.exec(bbCodeText)) !== null) {
+        const thumbnailUrl = match[2]; // Thumbnail URL lengkap
+        
+        // Gunakan convertImgboxLink untuk mendapatkan Original URL yang benar
+        const convertedLinks = convertImgboxLink(thumbnailUrl); 
+        
+        if (convertedLinks) {
+            postDataArray.push({
+                thumbnailUrl: convertedLinks.thumbnailUrl,
+                originalMediaUrl: convertedLinks.originalUrl
+            });
+        } else {
+            console.warn(`Gagal mengonversi BBCode (Thumbnail URL tidak valid): ${thumbnailUrl}`);
+        }
+    }
+    
+    return postDataArray;
+}
+// --- AKHIR parseBBCodeLinks YANG DIPERBAIKI ---
+
 
 // --- 1. Admin UI, Post Submission, dan Header Wallpaper ---
 
 if (IS_ADMIN) {
     uploadFormContainer.style.display = 'block';
     adminNicknameInput.value = currentNickname; 
+    
+    // [TAMBAHAN] Sinkronisasi Nickname Admin
+    if (bulkAdminNicknameInput) {
+        bulkAdminNicknameInput.value = adminNicknameInput.value;
+        adminNicknameInput.addEventListener('change', () => {
+            bulkAdminNicknameInput.value = adminNicknameInput.value;
+            sessionStorage.setItem('adminNickname', adminNicknameInput.value);
+        });
+        bulkAdminNicknameInput.addEventListener('change', () => {
+            adminNicknameInput.value = bulkAdminNicknameInput.value;
+            sessionStorage.setItem('adminNickname', bulkAdminNicknameInput.value);
+        });
+    }
+    
+    // --- Fungsionalitas Auto-Paste saat Fokus ---
+    
+    async function autoPasteAndSubmit(inputElement, formElement) {
+        if (!navigator.clipboard || !navigator.clipboard.readText) {
+            console.warn("Clipboard API tidak didukung atau konteks tidak aman.");
+            return;
+        }
+
+        try {
+            const clipboardText = await navigator.clipboard.readText();
+            
+            if (clipboardText.startsWith('http') && clipboardText.includes('imgbox.com')) {
+                inputElement.value = clipboardText;
+                console.log("Link Imgbox otomatis ditempel.");
+                
+                inputElement.dispatchEvent(new Event('change'));
+                
+                setTimeout(() => {
+                    if (document.getElementById('thumbnail-url').value && document.getElementById('original-url').value) {
+                         formElement.dispatchEvent(new Event('submit', { bubbles: true }));
+                    } else {
+                         console.error("Gagal submit otomatis: Link Imgbox tidak valid setelah konversi.");
+                    }
+                }, 50); 
+            }
+        } catch (err) {
+            console.error('Gagal membaca clipboard, izin ditolak atau tidak ada teks di clipboard:', err);
+        }
+    }
+    
+    // Tambahkan listener 'focus' ke input Imgbox
+    if (imgboxLinkInput && mediaForm) {
+        imgboxLinkInput.addEventListener('focus', function() {
+            autoPasteAndSubmit(this, mediaForm);
+        });
+    }
+    // --- AKHIR Fungsionalitas Auto-Paste saat Fokus ---
+
+
+    // --- EVENT LISTENER BARU UNTUK IMGBOX (LOGIKA KONVERSI LINK ASLI) ---
+    if (imgboxLinkInput) {
+        imgboxLinkInput.addEventListener('change', function() {
+            const link = this.value.trim();
+            if (link) {
+                const convertedLinks = convertImgboxLink(link);
+                if (convertedLinks) {
+                    document.getElementById('thumbnail-url').value = convertedLinks.thumbnailUrl;
+                    document.getElementById('original-url').value = convertedLinks.originalUrl;
+                } else {
+                    if (!this.getAttribute('data-autopaste-triggered')) {
+                        alert("Format link Imgbox tidak valid! Pastikan itu adalah link thumbnail Imgbox (*_b.jpg atau *_t.png, dll).");
+                    }
+                    document.getElementById('thumbnail-url').value = '';
+                    document.getElementById('original-url').value = '';
+                }
+            }
+        });
+    }
+    // --- AKHIR EVENT LISTENER LAMA ---
+
 } else {
     uploadFormContainer.style.display = 'none';
 }
 
 
+// --- 1.1. Unggah Tunggal Media ---
 document.getElementById('media-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -177,8 +350,11 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
 
     database.ref('posts').push(postData)
         .then(() => {
+            
             alert('Media berhasil diunggah! Memuat Feed Baru...');
             
+            // Bersihkan input setelah unggah
+            document.getElementById('imgbox-link').value = ''; 
             document.getElementById('caption').value = ''; 
             document.getElementById('thumbnail-url').value = '';
             document.getElementById('original-url').value = '';
@@ -196,6 +372,79 @@ document.getElementById('media-form').addEventListener('submit', function(e) {
             submitBtn.textContent = 'Kirim Anonim';
         });
 });
+
+
+// --- 1.2. [BARU] Unggah Massal BBCode ---
+if (IS_ADMIN && bulkMediaForm) {
+    bulkMediaForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const adminNickname = bulkAdminNicknameInput.value.trim();
+        const linksText = bulkImgboxLinksInput.value.trim();
+        const bulkCaption = bulkCaptionInput.value;
+        
+        if (!adminNickname || !linksText) {
+            alert("Nama Admin dan Daftar BBCode wajib diisi.");
+            return;
+        }
+
+        sessionStorage.setItem('adminNickname', adminNickname);
+
+        // Parsing BBCode untuk mendapatkan daftar link
+        const postLinks = parseBBCodeLinks(linksText);
+                                   
+        if (postLinks.length === 0) {
+            alert("Tidak ada BBCode Imgbox yang valid ditemukan. Pastikan formatnya benar: [URL=...][IMG]...[/IMG][/URL] dengan ekstensi gambar yang didukung (JPG, PNG, dll).");
+            return;
+        }
+
+        bulkSubmitBtn.disabled = true;
+        bulkUploadStatus.textContent = `Memulai unggah ${postLinks.length} media...`;
+        
+        let successCount = 0;
+        let failCount = 0;
+        
+        // Proses setiap post secara berurutan
+        for (let i = 0; i < postLinks.length; i++) {
+            const linkData = postLinks[i];
+            bulkUploadStatus.textContent = `Memproses post ${i + 1} dari ${postLinks.length} (${linkData.thumbnailUrl.substring(0, 40)}...)...`;
+            
+            const postData = {
+                anonymousUserId: currentUserId,
+                anonymousNickname: adminNickname,
+                caption: bulkCaption,
+                thumbnailUrl: linkData.thumbnailUrl, 
+                originalMediaUrl: linkData.originalMediaUrl,
+                timestamp: firebase.database.ServerValue.TIMESTAMP 
+            };
+            
+            try {
+                await database.ref('posts').push(postData);
+                successCount++;
+            } catch (error) {
+                console.error(`Gagal mengunggah post #${i+1}:`, error);
+                failCount++;
+            }
+        }
+        
+        bulkUploadStatus.textContent = `Selesai! Berhasil: ${successCount}. Gagal: ${failCount}. Memuat ulang Feed...`;
+        
+        // Bersihkan input setelah unggah
+        bulkImgboxLinksInput.value = '';
+        bulkCaptionInput.value = '';
+        
+        // Kembali ke halaman 1 dan muat ulang
+        currentPage = 1;
+        initializePagination(); 
+        
+        bulkSubmitBtn.disabled = false;
+        // Tampilkan status akhir
+        setTimeout(() => {
+            bulkUploadStatus.textContent = `Unggah massal selesai. Berhasil: ${successCount}. Gagal: ${failCount}.`;
+        }, 3000);
+    });
+}
+// --- AKHIR UNGGAH MASSAL ---
 
 const headerConfigRef = database.ref('config/headerWallpaper');
 
@@ -313,7 +562,167 @@ if (IS_ADMIN) {
 }
 
 
-// --- 3. Pagination, Post Display, dan Comment Count ---
+// --- 2. [BARU] Logika News Ticker (Berita Berjalan) ---
+
+const newsRef = database.ref('config/newsTicker');
+
+/**
+ * Membuat dan menjalankan animasi News Ticker
+ * @param {Array<string>} newsArray Array teks berita
+ */
+function displayNewsTicker(newsArray) {
+    if (newsArray.length === 0) {
+        newsTickerBar.style.display = 'none';
+        return;
+    }
+    
+    // Gabungkan semua berita menjadi satu string panjang
+    const combinedText = newsArray.map(n => n.text).join(' | '); 
+    
+    tickerTextScroll.innerHTML = `<span>${combinedText}</span>`;
+    
+    const span = tickerTextScroll.querySelector('span');
+    
+    // Perkirakan durasi animasi berdasarkan panjang teks (misalnya 0.2 detik per karakter)
+    const textLength = combinedText.length;
+    const animationDuration = Math.max(15, textLength * 0.2) + 's'; 
+    
+    // Atur ulang animasi
+    span.style.animation = 'none';
+    span.offsetHeight; // Memaksa reflow
+    span.style.animation = `ticker ${animationDuration} linear infinite`;
+    
+    newsTickerBar.style.display = 'flex';
+}
+
+function loadNewsFromDB() {
+    newsRef.once('value', (snapshot) => {
+        newsList = [];
+        snapshot.forEach((childSnapshot) => {
+            newsList.push({ id: childSnapshot.key, text: childSnapshot.val().text });
+        });
+        
+        // Filter berita yang mungkin kosong atau tidak valid
+        newsList = newsList.filter(n => n.text && n.text.trim() !== "");
+
+        // Tampilkan News Ticker di UI
+        displayNewsTicker(newsList); 
+        
+        // Muat daftar berita untuk panel Admin
+        if (IS_ADMIN) {
+            renderAdminNewsList(newsList);
+        }
+    });
+}
+
+// Handler untuk tombol tutup/buka News Ticker
+if (toggleTickerBtn) {
+    toggleTickerBtn.addEventListener('click', function() {
+        if (newsTickerBar.style.display === 'flex') {
+            newsTickerBar.style.display = 'none';
+            document.body.style.paddingTop = '0';
+        } else if (newsList.length > 0) {
+            newsTickerBar.style.display = 'flex';
+            document.body.style.paddingTop = '40px'; 
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadNewsFromDB);
+
+
+// --- [BARU] Logika Admin Panel Berita ---
+
+if (IS_ADMIN) {
+    
+    // Fungsi untuk merender daftar berita di panel admin
+    function renderAdminNewsList(news) {
+        activeNewsList.innerHTML = '';
+        news.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.setAttribute('data-id', item.id);
+            listItem.innerHTML = `
+                <span class="news-text-display">${item.text}</span>
+                <div class="news-actions">
+                    <button class="edit-btn" onclick="editNews('${item.id}', '${item.text.replace(/'/g, "\\'")}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteNews('${item.id}')">Hapus</button>
+                </div>
+            `;
+            activeNewsList.appendChild(listItem);
+        });
+    }
+    
+    // Listener untuk formulir Tambah/Edit Berita
+    addNewsForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const text = newsTextInput.value.trim();
+        if (!text) return;
+        
+        saveNewsBtn.disabled = true;
+        
+        if (isEditingNewsId) {
+            // Mode Edit
+            newsRef.child(isEditingNewsId).update({ text: text, timestamp: firebase.database.ServerValue.TIMESTAMP })
+                .then(() => {
+                    alert('Berita berhasil diperbarui!');
+                    isEditingNewsId = null;
+                    saveNewsBtn.textContent = 'Tambah Berita';
+                    newsTextInput.value = '';
+                    loadNewsFromDB(); // Muat ulang Ticker dan Admin List
+                })
+                .catch(error => {
+                    console.error("Gagal memperbarui berita:", error);
+                    alert('Gagal memperbarui berita.');
+                })
+                .finally(() => {
+                    saveNewsBtn.disabled = false;
+                });
+        } else {
+            // Mode Tambah Baru
+            newsRef.push({ text: text, timestamp: firebase.database.ServerValue.TIMESTAMP })
+                .then(() => {
+                    alert('Berita berhasil ditambahkan!');
+                    newsTextInput.value = '';
+                    loadNewsFromDB(); // Muat ulang Ticker dan Admin List
+                })
+                .catch(error => {
+                    console.error("Gagal menambah berita:", error);
+                    alert('Gagal menambah berita.');
+                })
+                .finally(() => {
+                    saveNewsBtn.disabled = false;
+                });
+        }
+    });
+    
+    // Fungsi untuk memulai mode Edit
+    window.editNews = function(id, text) {
+        isEditingNewsId = id;
+        newsTextInput.value = text;
+        saveNewsBtn.textContent = 'Simpan Perubahan';
+        // Gulir ke atas ke formulir
+        newsTextInput.scrollIntoView({ behavior: 'smooth' });
+        newsTextInput.focus();
+    }
+    
+    // Fungsi untuk menghapus berita
+    window.deleteNews = function(id) {
+        if (confirm("Yakin ingin menghapus berita ini?")) {
+            newsRef.child(id).remove()
+                .then(() => {
+                    alert('Berita berhasil dihapus.');
+                    loadNewsFromDB(); // Muat ulang Ticker dan Admin List
+                })
+                .catch(error => {
+                    console.error("Gagal menghapus berita:", error);
+                    alert('Gagal menghapus berita.');
+                });
+        }
+    }
+}
+
+
+// --- 3. Pagination, Post Display, dan Comment Count (TIDAK BERUBAH) ---
 
 function fetchCommentCount(postId, element) {
     database.ref('comments/' + postId).once('value', (snapshot) => {
@@ -542,7 +951,7 @@ window.deletePost = function(postId) {
     }
 }
 
-// --- FUNGSI KOMENTAR & MODAL ---
+// --- FUNGSI KOMENTAR & MODAL (TIDAK BERUBAH) ---
 
 window.deleteComment = function(postId, commentId) {
     if (!IS_ADMIN) {

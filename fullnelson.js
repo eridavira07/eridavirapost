@@ -2,15 +2,19 @@
 
 // --- Konfigurasi dan Setup Firebase (Ganti dengan detail Anda!) ---
 const firebaseConfig = {
-    apiKey: "AIzaSyC7RcZAU0-KP87xnguAHqbC_Oo5lm2QAaA",
-    authDomain: "fellas-df5db.firebaseapp.com",
-    databaseURL: "https://fellas-df5db-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "fellas-df5db",
-    storageBucket: "fellas-df5db.firebasestorage.app",
-    messagingSenderId: "402251127439",
-    appId: "1:402251127439:web:5be2526b16d79493506efa",
-    measurementId: "G-QK45YN28QZ"
+    apiKey: "AIzaSyDOErqBLwptnW1jqGYQel0cwBXfYjpxRJ8",
+    authDomain: "fullnelson-ed41e.firebaseapp.com",
+    databaseURL: "https://fullnelson-ed41e-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "fullnelson-ed41e",
+    storageBucket: "fullnelson-ed41e.firebasestorage.app",
+    messagingSenderId: "73970933270",
+    appId: "1:73970933270:web:2f69b6dc4c8d7d3eb91f37",
+    measurementId: "G-NNZFQ5KJQQ"
 };
+
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -97,7 +101,7 @@ const FOCUS_STEP = 5;
 let newsList = []; // Daftar Berita untuk Ticker
 
 // Pagination Variables
-const POSTS_PER_PAGE = 100; 
+const POSTS_PER_PAGE = 52; 
 let currentPage = 1;
 let totalPosts = 0;
 let totalPages = 1;
@@ -585,7 +589,7 @@ function displayNewsTicker(newsArray) {
     
     // Perkirakan durasi animasi berdasarkan panjang teks (misalnya 0.2 detik per karakter)
     const textLength = combinedText.length;
-    const animationDuration = Math.max(15, textLength * 0.1) + 's'; 
+    const animationDuration = Math.max(15, textLength * 0.2) + 's'; 
     
     // Atur ulang animasi
     span.style.animation = 'none';

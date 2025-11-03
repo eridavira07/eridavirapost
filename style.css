@@ -8,6 +8,8 @@
     --admin-color: #ffd700;
     --deleted-color: #e53e3e;
     --accent-color: #63b3ed;
+    --ticker-bg: #e53e3e; /* Warna latar belakang untuk Notifikasi/Berita Merah */
+    --ticker-text: #ffffff; /* Warna teks untuk Notifikasi/Berita */
 }
 
 body {
@@ -16,6 +18,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     min-height: 100vh;
+    padding-top: 0; /* JS akan mengatur padding-top saat ticker aktif */
 }
 
 main {
@@ -23,6 +26,121 @@ main {
     margin: 0 auto;
     padding: 0 20px 40px 20px;
 }
+
+/* --- News Ticker Styling --- */
+#news-ticker-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-color: var(--ticker-bg); 
+    color: var(--ticker-text);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.ticker-content-wrapper {
+    display: flex;
+    overflow: hidden;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.ticker-label {
+    background-color: rgba(0, 0, 0, 0.2); 
+    padding: 0 15px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    flex-shrink: 0; 
+}
+
+.ticker-text-scroll {
+    overflow: hidden;
+    white-space: nowrap;
+    line-height: 40px; 
+    padding-left: 15px;
+    font-size: 0.9em;
+}
+
+/* Animasi Berjalan (DIPERBAIKI) */
+@keyframes ticker {
+    0% { transform: translate3d(100vw, 0, 0); } /* Mulai dari luar layar di sebelah kanan */
+    100% { transform: translate3d(-100%, 0, 0); } /* Berjalan ke kiri sejauh lebar teks itu sendiri */
+}
+
+.ticker-text-scroll span {
+    display: inline-block;
+    padding-right: 50px; 
+    animation: ticker 25s linear infinite; 
+    /* Durasi akan diatur ulang oleh JS berdasarkan panjang teks */
+}
+
+
+.toggle-ticker-btn {
+    background: none;
+    border: none;
+    color: var(--ticker-text);
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0 10px;
+    height: 100%;
+    transition: background-color 0.2s;
+}
+
+.toggle-ticker-btn:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* --- Gaya Admin Berita --- */
+#active-news-list {
+    list-style: none;
+    padding: 0;
+}
+
+#active-news-list li {
+    background-color: var(--bg-color);
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 5px solid var(--accent-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.news-text-display {
+    flex-grow: 1;
+    word-break: break-word;
+    margin-right: 10px;
+}
+
+.news-actions button {
+    margin-left: 8px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: opacity 0.2s;
+}
+
+.news-actions .edit-btn {
+    background-color: var(--admin-color);
+    color: var(--bg-color);
+}
+
+.news-actions .delete-btn {
+    background-color: var(--deleted-color);
+    color: white;
+}
+/* --- Akhir Gaya News Ticker --- */
+
 
 /* --- Header Styling --- */
 #dynamic-header {
@@ -109,7 +227,9 @@ main {
 
 #media-form input[type="text"],
 #media-form input[type="url"],
-#media-form textarea {
+#media-form textarea,
+/* Ditambahkan untuk Admin Berita */
+#add-news-form input[type="text"] {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
@@ -126,7 +246,9 @@ main {
 }
 
 #media-form button,
-#wallpaper-setting-form button {
+#wallpaper-setting-form button,
+/* Ditambahkan untuk Admin Berita */
+#add-news-form button {
     padding: 10px 15px;
     background-color: var(--accent-color);
     color: var(--bg-color);
@@ -138,7 +260,8 @@ main {
 }
 
 #media-form button:hover,
-#wallpaper-setting-form button:hover {
+#wallpaper-setting-form button:hover,
+#add-news-form button:hover {
     background-color: #4299e1;
 }
 
@@ -246,8 +369,7 @@ main {
     width: 100%;
     padding-bottom: 100%; /* MEMAKSA RASIO ASPEK 1:1 */
     overflow: hidden;
-    /* max-height: 300px; <-- Dihapus karena padding-bottom mengatur tinggi */
-    display: block; /* Menggunakan display block karena kita memakai padding-bottom */
+    display: block; 
 }
 
 .media-container img {
@@ -424,6 +546,28 @@ main {
 }
 
 @media (max-width: 600px) {
+    body {
+        /* Tambah padding agar News Ticker tidak menutupi header */
+        padding-top: 80px; 
+    }
+    
+    #news-ticker-bar {
+        flex-wrap: wrap; 
+        height: auto;
+    }
+    
+    .ticker-content-wrapper {
+        width: 100%;
+        height: 40px;
+    }
+    
+    .toggle-ticker-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 40px;
+    }
+    
     main {
         padding: 0 10px 40px 10px;
     }
@@ -469,4 +613,80 @@ main {
 #page-numbers-display {
     font-size: 1em;
     color: #a0aec0;
+}
+
+/* =================================================== */
+/* --- Styling Khusus untuk Panel Unggahan Massal BBCode (Admin) --- */
+/* =================================================== */
+
+#bulk-upload-panel {
+    /* Memberi jarak dan garis pemisah dari form unggah tunggal di atasnya */
+    margin-top: 30px; 
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+#bulk-media-form {
+    /* Menggunakan grid untuk tata letak yang konsisten */
+    display: grid;
+    gap: 15px;
+    grid-template-columns: 1fr; /* Satu kolom utama */
+}
+
+#bulk-media-form input[type="text"] {
+    /* Gaya input teks standar */
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#bulk-media-form textarea {
+    /* Gaya khusus untuk textarea input BBCode */
+    width: 100%;
+    height: 300px; /* Tinggi yang lebih besar untuk menampung banyak BBCode */
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    resize: vertical; /* Izinkan user merubah tinggi */
+    font-family: monospace; /* Menggunakan font monospace agar BBCode lebih mudah dibaca */
+    font-size: 0.9em;
+    box-sizing: border-box;
+}
+
+#bulk-submit-btn {
+    /* Gaya untuk tombol Kirim Massal */
+    background-color: var(--accent-color); /* Contoh: Biru terang */
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    grid-column: 1 / -1; /* Tombol membentang penuh */
+}
+
+#bulk-submit-btn:hover:not([disabled]) {
+    background-color: #4c99e1; /* Warna saat di-hover */
+}
+
+#bulk-submit-btn:disabled {
+    /* Gaya saat tombol dinonaktifkan (sedang mengunggah) */
+    background-color: var(--border-color);
+    cursor: not-allowed;
+}
+
+#bulk-upload-status {
+    /* Gaya untuk menampilkan status unggahan */
+    margin-top: 10px;
+    color: var(--accent-color);
+    text-align: center;
+    font-weight: bold;
 }
