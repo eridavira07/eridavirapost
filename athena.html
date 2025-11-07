@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena Asamiya</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS TEMA ATHENA ASAMIYA --- */
+        :root {
+            /* Warna Dasar */
+            --bg-color: #0d0d1a; /* Ungu gelap solid */
+            --text-color: #f0f0f5; /* Putih kebiruan */
+            --card-bg: #1a1a2e; /* Kartu ungu gelap */
+            --border-color: #3f3f6e; /* Border ungu */
+
+            /* Warna Aksen (Khas Athena: Pink/Biru) */
+            --primary-color: #ff69b4; /* Pink Cerah (Hot Pink) */
+            --primary-hover: #e05c9e; 
+            --secondary-color: #4dc4ff; /* Biru Muda Cerah */
+
+            /* Efek Psychic Power */
+            --shadow-glow: 0 0 10px rgba(255, 105, 180, 0.7); /* Pink Glow */
+            --shadow-hover: 0 0 15px rgba(77, 196, 255, 0.9); /* Blue Glow */
+            
+            /* Warna Lain */
+            --error-color: #ff5252;
+            --link-color: var(--secondary-color);
+            --comment-bg: #2a2a3e; 
+            --carousel-btn-bg: rgba(26, 26, 46, 0.7); 
+            --carousel-btn-hover: rgba(26, 26, 46, 1);
+            --admin-bg: #2e2e4e; 
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* --- DEFAULT HEADER STYLE (DIKEMBALIKAN KE PUSAT) --- */
+        h1, h2, h3 {
+            text-align: center;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* --- JUDUL H1 ATHENA ASAMIYA (OVERRIDE) --- */
+        h1 {
+            font-family: 'Fugaz One', cursive; /* Font Spesial */
+            font-size: 2.5em;
+            color: var(--primary-color); 
+            text-shadow: 2px 2px 5px var(--secondary-color), 0 0 15px var(--primary-color); /* Efek Psychic Glow */
+            border-bottom: 3px solid var(--secondary-color); 
+            letter-spacing: 2px;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        /* --- OVERRIDE UNTUK ADMIN PANEL & SUB-SECTION (LEFT ALIGNED) --- */
+        .admin-panel h2 { 
+            text-align: center; 
+            color: var(--secondary-color);
+        }
+        .admin-panel h3 { /* Postingan Galeri, Manajemen Foto Dinding, dll. */
+            text-align: left; 
+            border-bottom: none; 
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+        .admin-panel h4 {
+            text-align: left;
+            margin-top: 20px; 
+            margin-bottom: 10px; 
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        /* Header "Pilihan Foto Teratas" */
+        .container > h2:nth-of-type(1) { 
+            text-align: left; 
+            border-bottom: none; 
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+
+
+        /* --- ADMIN PANEL STYLE --- */
+        .admin-panel {
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: var(--admin-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-glow);
+        }
+        .wallpaper-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #38385e; 
+            border-radius: 4px;
+        }
+        .wallpaper-list-item img {
+             width: 50px;
+            height: 30px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        .wallpaper-list-item span {
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9em;
+        }
+        .delete-btn {
+            background-color: var(--error-color);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background-color 0.3s;
+        }
+
+        /* Input & Button Styling */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-sizing: border-box;
+            background-color: #333355;
+            color: var(--text-color);
+            resize: vertical;
+        }
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--bg-color); 
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 5px rgba(255, 105, 180, 0.5);
+        }
+        .btn:hover {
+            background-color: var(--primary-hover);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        /* --- CAROUSEL WALLPAPER STYLE --- */
+        .carousel-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-glow); 
+            background-color: #000;
+        }
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 250px; 
+        }
+        .carousel-slide {
+            min-width: 100%;
+            flex-shrink: 0;
+        }
+        .carousel-slide img {
+            width: 100%;
+            height: 250px; 
+            object-fit: cover; 
+            display: block;
+        }
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--carousel-btn-bg);
+            color: var(--secondary-color);
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 50;
+            font-size: 24px;
+            line-height: 1;
+            transition: background-color 0.3s;
+        }
+        .carousel-btn:hover {
+            background-color: var(--carousel-btn-hover);
+        }
+        #prevBtn {
+            left: 0;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+        #nextBtn {
+            right: 0;
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }
+
+        /* --- FOTO TERATAS (Grid 5 Kolom - 4:5 Portrait) --- */
+        #top-posts-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 10px 0;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+        .top-post-item {
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(255, 105, 180, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .top-post-item:hover {
+            transform: scale(1.08);
+            box-shadow: var(--shadow-hover);
+        }
+        .top-post-item a {
+            display: block;
+            width: 100%;
+        }
+        /* Rasio 4:5 (Portrait) */
+        .top-post-item .ratio-box {
+            position: relative;
+            width: 100%;
+            padding-top: 125%; 
+            overflow: hidden;
+        }
+        .top-post-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color);
+        }
+        
+        /* --- GALERI GRID UTAMA (Grid 1:1 Square) --- */
+        #posts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .post-item {
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .post-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-glow);
+        }
+        
+        /* Rasio Aspek Container (1:1) - WAJIB KOTAK */
+        .ratio-box {
+            position: relative;
+            width: 100%;
+            padding-top: 100%; 
+            overflow: hidden;
+        }
+        /* Gambar mengisi Ratio Box (1:1) */
+        .post-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover; 
+        }
+
+        /* Keterangan (Caption) */
+        .post-item p.gallery-caption {
+            padding: 10px;
+            margin: 0;
+            font-size: 0.85em;
+            color: var(--secondary-color);
+            background-color: #38385e;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: bold;
+        }
+
+        /* --- MODAL (Pop-up) --- */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8); 
+            padding: 20px;
+        }
+        .modal-content {
+            margin: 3% auto; 
+            width: 95%; 
+            max-width: 1000px; 
+            height: 90vh; 
+            background-color: var(--admin-bg);
+            border-radius: 10px;
+            position: relative;
+            box-shadow: var(--shadow-hover);
+            display: flex;
+            overflow: hidden; 
+        }
+        .modal-left {
+            flex: 2;
+            background-color: #000;
+        }
+        .modal-left img {
+            width: 100%; 
+            height: 100%;
+            object-fit: contain; 
+        }
+        .modal-right {
+            flex: 1;
+            padding: 20px;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            color: var(--primary-color);
+            font-size: 40px;
+            font-weight: bold;
+            transition: color 0.3s;
+            cursor: pointer;
+            z-index: 1001;
+            text-shadow: var(--shadow-glow);
+        }
+        
+        /* --- MODIFIKASI: Gaya Tombol Navigasi Modal (DILUAR KOTAK POP-UP) --- */
+        .modal-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(13, 13, 26, 0.7); 
+            color: var(--secondary-color);
+            border: 2px solid var(--secondary-color);
+            padding: 15px;
+            cursor: pointer;
+            z-index: 1010; 
+            font-size: 28px;
+            line-height: 1;
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            border-radius: 50%; /* Bulat */
+            width: 60px; 
+            height: 60px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-hover);
+            /* Sembunyikan secara default, ditampilkan oleh JS */
+            display: none; 
+        }
+        .modal-nav-btn:hover {
+            background-color: var(--secondary-color); 
+            color: var(--bg-color); 
+            box-shadow: var(--shadow-glow); 
+        }
+        /* Posisi tombol di samping modal (fixed agar di viewport) */
+        .modal-outside-btn {
+            position: fixed; 
+        }
+
+        #modal-prev-btn {
+            left: 20px; 
+        }
+        #modal-next-btn {
+            right: 20px; 
+        }
+        /* --- AKHIR MODIFIKASI: Gaya Tombol Navigasi Modal --- */
+
+        #popup-caption-area {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        #popup-caption-text {
+            font-style: italic;
+            color: var(--text-color);
+        }
+        /* --- Tombol Download Foto Original --- */
+        #download-btn {
+            margin-top: 10px;
+            display: block;
+            background-color: var(--secondary-color); /* Biru muda cerah */
+            color: var(--bg-color); /* Teks gelap agar kontras */
+            box-shadow: 0 0 5px rgba(77, 196, 255, 0.5); /* Blue glow */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #download-btn:hover {
+            background-color: #37b7e8; /* Biru sedikit lebih gelap saat hover */
+            box-shadow: var(--shadow-glow); /* Pink glow saat hover */
+        }
+        #comments-section {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-bottom: 15px;
+        }
+        .comment-item {
+            background-color: var(--comment-bg);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        .comment-name {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        #comment-form input, #comment-form textarea {
+            background-color: #1a1a2e;
+            border-color: #5d5d85;
+            color: var(--text-color);
+        }
+        /* --- Tombol Kirim Komentar --- */
+        #comment-form .btn { /* Menggunakan selector lebih spesifik */
+            background-color: var(--primary-color); /* Pink Cerah */
+            color: var(--bg-color); /* Teks gelap agar kontras */
+            box-shadow: 0 0 5px rgba(255, 105, 180, 0.5); /* Pink glow */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #comment-form .btn:hover {
+            background-color: var(--primary-hover); /* Pink sedikit lebih gelap saat hover */
+            box-shadow: var(--shadow-hover); /* Blue glow saat hover */
+        }
+
+
+        /* --- MEDIA QUERY --- */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            .carousel-track {
+                height: 150px; 
+            }
+            .carousel-slide img {
+                height: 150px;
+            }
+            .modal-content {
+                flex-direction: column;
+                max-width: 95%;
+                height: auto;
+                margin-top: 10px;
+            }
+            .modal-left {
+                height: 50vh; 
+                flex: none;
+            }
+            .modal-right {
+                flex: none;
+                height: auto;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+                padding: 10px;
+            }
+            #comments-section {
+                max-height: 250px; 
+            }
+            .close-btn {
+                position: static;
+                text-align: right;
+            }
+             /* Media Query: Ubah ke 3 kolom di mobile */
+            #top-posts-container {
+                grid-template-columns: repeat(3, 1fr); 
+                gap: 8px;
+            }
+             /* MODIFIKASI: Posisikan tombol navigasi di bagian bawah saat mobile */
+            .modal-nav-btn {
+                top: auto; 
+                bottom: 10px; 
+                transform: none;
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+            #modal-prev-btn {
+                left: 10px;
+            }
+            #modal-next-btn {
+                right: 10px;
+            }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div id="image-carousel" class="carousel-container">
+            <div id="carousel-track" class="carousel-track">
+                </div>
+            <button id="prevBtn" class="carousel-btn">&#10094;</button>
+            <button id="nextBtn" class="carousel-btn">&#10095;</button>
+        </div>
+        
+        <h2>🌟HOT</h2>
+        <div id="top-posts-container">
+            </div>
+        <h1>ATHENA ASAMIYA</h1>
+
+        <div id="admin-controls" class="admin-panel" style="display:none;">
+            <h2>⚙️ Kontrol Admin</h2>
+            
+            <h3 style="text-align:left; border-bottom: none; margin-bottom: 10px;">Manajemen Foto Dinding</h3>
+            <form id="wallpaper-form">
+                <label for="wallpaper-url">URL Foto Dinding (Resolusi Lebar):</label>
+                <input type="text" id="wallpaper-url" placeholder="Masukkan URL gambar di sini..." required>
+                <button type="submit" class="btn">Tambahkan ke Dinding</button>
+            </form>
+            
+            <h4 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid var(--border-color);">Daftar Foto Dinding Aktif</h4>
+            <div id="active-wallpapers">
+                <p>Memuat...</p>
+            </div>
+            
+            <hr style="border-color: #444; margin: 25px 0;">
+
+            <h3 style="text-align:left; border-bottom: none; margin-bottom: 10px;">Teratas</h3>
+            <form id="top-post-form">
+                <label for="top-post-url">URL Foto Teratas (Thumbnail):</label>
+                <input type="text" id="top-post-url" placeholder="Masukkan URL gambar di sini..." required>
+                <label for="top-post-link">Link Tujuan (Opsional - Contoh: Link ke halaman lain):</label>
+                <input type="text" id="top-post-link" placeholder="Masukkan link klik di sini (opsional)">
+                <button type="submit" class="btn">Tambahkan ke Foto Teratas</button>
+            </form>
+            
+            <h4 style="margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid var(--border-color);">Daftar Foto Teratas Aktif</h4>
+            <div id="active-top-posts">
+                <p>Memuat...</p>
+            </div>
+
+            <hr style="border-color: #444; margin: 25px 0;">
+            <h3 style="text-align:left; border-bottom: none; margin-bottom: 10px;">Postingan Galeri</h3>
+            <form id="post-form">
+                <label for="bbcode-input">Masukkan BBCode Imgbox (Boleh Lebih Dari Satu):</label>
+                <textarea id="bbcode-input" rows="6" placeholder="Contoh: [URL=...][IMG]...[/IMG][/URL] [URL=...][IMG]...[/IMG][/URL]"></textarea>
+
+                <label for="caption-input">Keterangan (Opsional):</label>
+                <input type="text" id="caption-input" placeholder="Tulis keterangan foto di sini">
+
+                <button type="submit" class="btn">Posting Foto (Multi-BBCode)</button>
+                <p id="message"></p>
+            </form>
+
+        </div>
+        <h2>Terbaru</h2>
+        <div id="posts-container">
+            <p id="loading-message">Memuat foto...</p>
+        </div>
+    </div>
+
+    <div id="photo-modal" class="modal">
+        
+        <button id="modal-prev-btn" class="carousel-btn modal-nav-btn modal-outside-btn">&#10094;</button>
+        <button id="modal-next-btn" class="carousel-btn modal-nav-btn modal-outside-btn">&#10095;</button>
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-left">
+                <img id="popup-image" src="" alt="Foto Pop-up">
+            </div>
+            <div class="modal-right">
+                <div id="popup-caption-area">
+                    <p id="popup-caption-text"></p>
+                    <a id="download-btn" href="#" target="_blank" class="btn">Download Foto Original</a>
+                </div>
+                <h3>Komentar</h3>
+                <div id="comments-section">
+                    <p id="comment-loading">Memuat komentar...</p>
+                </div>
+                <div id="comment-form-area">
+                    <form id="comment-form">
+                        <input type="text" id="comment-name" placeholder="Nama Anda" required>
+                        <textarea id="comment-text" rows="2" placeholder="Tulis komentar..." required></textarea>
+                        <button type="submit" class="btn">Kirim Komentar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- KUNCI RAHASIA ---
+        const SECRET_KEY = 'admin-eri-2025'; 
+        const adminControls = document.getElementById('admin-controls');
+        const postForm = document.getElementById('post-form');
+        const formMessage = document.getElementById('message');
+        
+        adminControls.style.display = 'none';
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function checkAccess() {
+            const key = getQueryParam('key');
+            if (key === SECRET_KEY) {
+                adminControls.style.display = 'block';
+                formMessage.style.color = 'var(--secondary-color)';
+                formMessage.textContent = 'Mode Posting Aktif (Admin).';
+            }
+        }
+
+        checkAccess();
+        
+        // 1. Konfigurasi Firebase Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6wIHT6C3VWqL2SOL2Li4fKF5U_MywaTQ",
+            authDomain: "athenacult-40fbc.firebaseapp.com",
+            databaseURL: "https://athenacult-40fbc-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "athenacult-40fbc",
+            storageBucket: "athenacult-40fbc.firebasestorage.app",
+            messagingSenderId: "492990343473",
+            appId: "1:492990343473:web:fef65c26fe38227c012810",
+            measurementId: "G-RQYQE63DWW"
+        };
+
+        // 2. Inisialisasi Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = app.database();
+        const postsRef = database.ref('photo_posts');
+        const wallpapersRef = database.ref('wallpapers');
+        const topPostsRef = database.ref('top_posts'); 
+        
+        // Regex untuk BBCode
+        const fullBBCodeRegex = /(\[URL=.*?\]\[IMG\].*?\[\/IMG\]\[\/URL\])/gi;
+        const urlRegex = /\[URL=(.*?)\]/i;
+        const imgRegex = /\[IMG\](.*?)\[\/IMG\]/i;
+        let currentPostId = null;
+        
+        // --- MODIFIKASI: VARIABEL NAVIGASI MODAL ---
+        let allPostIds = []; // Array untuk menyimpan ID postingan yang diurutkan (terbaru ke terlama)
+        const modalPrevBtn = document.getElementById('modal-prev-btn');
+        const modalNextBtn = document.getElementById('modal-next-btn');
+        // --- AKHIR MODIFIKASI ---
+
+
+        // --- LOGIKA CAROUSEL (Tetap) ---
+        const carouselTrack = document.getElementById('carousel-track');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let currentSlide = 0;
+        let wallpaperImages = [];
+
+        function initializeCarousel(images) {
+            wallpaperImages = images;
+            carouselTrack.innerHTML = ''; 
+            
+            if (wallpaperImages.length === 0) {
+                document.getElementById('image-carousel').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('image-carousel').style.display = 'block';
+            }
+
+            wallpaperImages.forEach(url => {
+                const slide = document.createElement('div');
+                slide.className = 'carousel-slide';
+                slide.innerHTML = `<img src="${url}" alt="Foto Dinding">`;
+                carouselTrack.appendChild(slide);
+            });
+            
+            function goToSlide(index) {
+                if (index < 0) {
+                    currentSlide = wallpaperImages.length - 1;
+                } else if (index >= wallpaperImages.length) {
+                    currentSlide = 0;
+                } else {
+                    currentSlide = index;
+                }
+                const offset = -currentSlide * 100;
+                carouselTrack.style.transform = `translateX(${offset}%)`;
+            }
+
+            if (!prevBtn.hasListener) {
+                prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+                nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+                prevBtn.hasListener = true;
+                nextBtn.hasListener = true;
+            }
+
+            if (carouselTrack.autoplayInterval) clearInterval(carouselTrack.autoplayInterval);
+            carouselTrack.autoplayInterval = setInterval(() => {
+                goToSlide(currentSlide + 1);
+            }, 5000); 
+
+            goToSlide(0); 
+        }
+
+        // --- LOGIKA MANAJEMEN WALLPAPER (Tetap) ---
+        const wallpaperForm = document.getElementById('wallpaper-form');
+        const activeWallpapersDiv = document.getElementById('active-wallpapers');
+
+        wallpapersRef.on('value', (snapshot) => {
+            const wallpapers = snapshot.val();
+            const wallpaperArray = [];
+            
+            if (wallpapers) {
+                Object.keys(wallpapers).forEach(key => {
+                    wallpaperArray.push({
+                        id: key,
+                        url: wallpapers[key]
+                    });
+                });
+            }
+            initializeCarousel(wallpaperArray.map(item => item.url));
+
+            if (getQueryParam('key') === SECRET_KEY) {
+                activeWallpapersDiv.innerHTML = ''; 
+                if (wallpaperArray.length > 0) {
+                    wallpaperArray.forEach(item => {
+                        const listItem = document.createElement('div');
+                        listItem.className = 'wallpaper-list-item';
+                        listItem.innerHTML = `
+                            <img src="${item.url}" alt="Thumbnail">
+                            <span>${item.url}</span>
+                            <button class="delete-btn" data-id="${item.id}">Hapus</button>
+                        `;
+                        activeWallpapersDiv.appendChild(listItem);
+                    });
+                } else {
+                    activeWallpapersDiv.innerHTML = '<p>Belum ada foto dinding.</p>';
+                }
+            }
+        });
+
+        wallpaperForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const urlInput = document.getElementById('wallpaper-url');
+            const url = urlInput.value.trim();
+
+            if (url) {
+                wallpapersRef.push(url)
+                    .then(() => {
+                        urlInput.value = '';
+                        alert('Foto dinding berhasil ditambahkan!');
+                    })
+                    .catch(error => alert('Gagal menambahkan foto dinding: ' + error.message));
+            }
+        });
+
+        activeWallpapersDiv.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                const itemId = e.target.dataset.id;
+                if (confirm('Yakin ingin menghapus foto dinding ini?')) {
+                    wallpapersRef.child(itemId).remove()
+                        .then(() => alert('Foto dinding berhasil dihapus!'))
+                        .catch(error => alert('Gagal menghapus: ' + error.message));
+                }
+            }
+        });
+
+        // --- LOGIKA MANAJEMEN FOTO TERATAS (Tetap) ---
+        const topPostForm = document.getElementById('top-post-form');
+        const activeTopPostsDiv = document.getElementById('active-top-posts');
+        const topPostsContainer = document.getElementById('top-posts-container');
+        
+        // 1. Logika Submit (Admin)
+        topPostForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const urlInput = document.getElementById('top-post-url');
+            const linkInput = document.getElementById('top-post-link');
+            const url = urlInput.value.trim();
+            const link = linkInput.value.trim() || '#';
+
+            if (url) {
+                const data = {
+                    url: url,
+                    link: link,
+                    timestamp: Date.now()
+                };
+
+                topPostsRef.push(data)
+                    .then(() => {
+                        urlInput.value = '';
+                        linkInput.value = '';
+                        alert('Foto Teratas berhasil ditambahkan!');
+                    })
+                    .catch(error => alert('Gagal menambahkan Foto Teratas: ' + error.message));
+            }
+        });
+
+        // 2. Logika Muat & Tampil (Admin & Pengguna)
+        topPostsRef.on('value', (snapshot) => {
+            const posts = snapshot.val();
+            const postArray = [];
+            
+            if (posts) {
+                Object.keys(posts).forEach(key => {
+                    postArray.push({
+                        id: key,
+                        ...posts[key]
+                    });
+                });
+            }
+            
+            // Urutkan berdasarkan timestamp (terbaru di atas) dan ambil hanya 5 teratas
+            const sortedAndLimitedPosts = postArray
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .slice(0, 5); 
+            
+            // Tampilkan di bagian utama (Pengguna)
+            topPostsContainer.innerHTML = '';
+            if (sortedAndLimitedPosts.length > 0) {
+                sortedAndLimitedPosts.forEach(item => {
+                    const postItem = document.createElement('div');
+                    postItem.className = 'top-post-item';
+                    
+                    postItem.innerHTML = `
+                        <a href="${item.link}" target="_blank">
+                            <div class="ratio-box">
+                                <img src="${item.url}" alt="Foto Teratas">
+                            </div>
+                        </a>
+                    `;
+                    topPostsContainer.appendChild(postItem);
+                });
+            } else {
+                topPostsContainer.innerHTML = '<p style="text-align:center; grid-column: 1 / -1; color: var(--text-color);">Belum ada foto teratas yang diatur.</p>';
+            }
+
+
+            // Tampilkan di Panel Admin (Admin)
+            if (getQueryParam('key') === SECRET_KEY) {
+                activeTopPostsDiv.innerHTML = ''; 
+                if (postArray.length > 0) {
+                    postArray.forEach(item => {
+                        const listItem = document.createElement('div');
+                        listItem.className = 'wallpaper-list-item'; 
+                        listItem.innerHTML = `
+                            <img src="${item.url}" alt="Thumbnail">
+                            <span>${item.url}</span>
+                            <button class="delete-btn" data-id="${item.id}">Hapus</button>
+                        `;
+                        activeTopPostsDiv.appendChild(listItem);
+                    });
+                } else {
+                    activeTopPostsDiv.innerHTML = '<p>Belum ada foto teratas.</p>';
+                }
+            }
+        });
+        
+        // 3. Logika Hapus (Admin)
+        activeTopPostsDiv.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                const itemId = e.target.dataset.id;
+                if (confirm('Yakin ingin menghapus foto teratas ini?')) {
+                    topPostsRef.child(itemId).remove()
+                        .then(() => alert('Foto Teratas berhasil dihapus!'))
+                        .catch(error => alert('Gagal menghapus: ' + error.message));
+                }
+            }
+        });
+
+
+        // --- LOGIKA POSTING FOTO & KOMENTAR (Tetap) ---
+
+        function convertToOriginalUrl(thumbnailUrl) {
+            if (!thumbnailUrl || typeof thumbnailUrl !== 'string') return '#';
+            let originalUrl = thumbnailUrl.replace('thumbs2.imgbox.com', 'images2.imgbox.com');
+            originalUrl = originalUrl.replace('_t.', '_o.');
+            return originalUrl;
+        }
+
+        function parseAllBbcodes(fullInput) {
+            const matches = fullInput.match(fullBBCodeRegex);
+            const parsedPosts = [];
+            if (!matches) return [];
+
+            matches.forEach(bbcode => {
+                const urlMatch = bbcode.match(urlRegex);
+                const imgMatch = bbcode.match(imgRegex);
+
+                if (imgMatch && imgMatch[1]) {
+                    const thumbnailUrl = imgMatch[1].trim();
+                    parsedPosts.push({
+                        bbcode: bbcode.trim(),
+                        imageUrl: thumbnailUrl, 
+                        fullUrl: urlMatch && urlMatch[1] ? urlMatch[1].trim() : '#', 
+                        originalDownloadUrl: convertToOriginalUrl(thumbnailUrl) 
+                    });
+                }
+            });
+            return parsedPosts;
+        }
+
+        postForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (adminControls.style.display === 'none') return;
+
+            const bbcodeInput = document.getElementById('bbcode-input').value.trim();
+            const captionInput = document.getElementById('caption-input').value.trim();
+            
+            if (!bbcodeInput) {
+                formMessage.textContent = 'BBCode Imgbox tidak boleh kosong.';
+                return;
+            }
+            
+            const postsToSubmit = parseAllBbcodes(bbcodeInput);
+            if (postsToSubmit.length === 0) {
+                formMessage.textContent = 'Tidak dapat menemukan BBCode Imgbox yang valid.';
+                return;
+            }
+            
+            let successCount = 0;
+            let errorCount = 0;
+
+            postsToSubmit.forEach(post => {
+                const postData = {
+                    bbcode: post.bbcode,
+                    imageUrl: post.imageUrl,
+                    fullUrl: post.fullUrl,
+                    originalDownloadUrl: post.originalDownloadUrl, 
+                    caption: captionInput,
+                    timestamp: Date.now() 
+                };
+
+                postsRef.push(postData)
+                    .then(() => {
+                        successCount++;
+                        if (successCount + errorCount === postsToSubmit.length) {
+                             finalizeSubmission(successCount, errorCount, postsToSubmit.length, formMessage);
+                        }
+                    })
+                    .catch((error) => {
+                        errorCount++;
+                        console.error("Gagal mengirim:", error);
+                        if (successCount + errorCount === postsToSubmit.length) {
+                             finalizeSubmission(successCount, errorCount, postsToSubmit.length, formMessage);
+                        }
+                    });
+            });
+            
+            formMessage.style.color = 'var(--link-color)';
+            formMessage.textContent = `Memproses ${postsToSubmit.length} foto...`;
+            
+            function finalizeSubmission(sCount, eCount, total, msgEl) {
+                if (sCount === total) {
+                    msgEl.style.color = 'var(--primary-color)';
+                    msgEl.textContent = `Berhasil memposting ${sCount} foto!`;
+                } else {
+                    msgEl.style.color = 'var(--error-color)';
+                    msgEl.textContent = `Selesai. Berhasil memposting ${sCount} foto, tetapi ${eCount} foto gagal.`;
+                }
+                document.getElementById('bbcode-input').value = ''; 
+                document.getElementById('caption-input').value = '';
+            }
+        });
+
+        // 5. Memuat dan menampilkan postingan foto
+        const postsContainer = document.getElementById('posts-container');
+        const loadingMessage = document.getElementById('loading-message');
+
+        postsRef.on('value', (snapshot) => {
+            const posts = snapshot.val();
+            postsContainer.innerHTML = ''; 
+            loadingMessage.style.display = 'none'; 
+
+            if (posts) {
+                const postArray = Object.keys(posts).map(key => ({
+                    id: key,
+                    ...posts[key]
+                })).sort((a, b) => b.timestamp - a.timestamp); 
+
+                // --- MODIFIKASI: ISI ARRAY ID POSTINGAN ---
+                allPostIds = postArray.map(post => post.id);
+                // --- AKHIR MODIFIKASI ---
+
+                postArray.forEach(post => {
+                    const postItem = document.createElement('div');
+                    postItem.className = 'post-item';
+
+                    postItem.dataset.id = post.id;
+                    postItem.dataset.thumbnail = post.imageUrl;
+                    postItem.dataset.caption = post.caption || ''; 
+                    postItem.dataset.original = post.originalDownloadUrl;
+
+                    // --- STRUKTUR HTML BARU UNTUK RATIO HACK ---
+                    postItem.innerHTML = `
+                        <div class="ratio-box">
+                            <img src="${post.imageUrl}" alt="${post.caption || 'Foto diposting'}">
+                        </div>
+                        ${post.caption ? `<p class="gallery-caption">${post.caption}</p>` : ''}
+                    `;
+                    // --- AKHIR STRUKTUR BARU ---
+                    
+                    postItem.addEventListener('click', () => openModal(postItem.dataset));
+                    
+                    postsContainer.appendChild(postItem);
+                });
+            } else {
+                postsContainer.innerHTML = '<p style="color:var(--text-color);">Belum ada foto yang diposting.</p>';
+            }
+        }, (error) => {
+            postsContainer.innerHTML = `<p style="color: var(--error-color);">Gagal memuat data dari Firebase: ${error.message}</p>`;
+            loadingMessage.style.display = 'none';
+        });
+
+        // --- LOGIKA POP-UP MODAL & KOMENTAR ---
+        const modal = document.getElementById('photo-modal');
+        const closeBtn = document.getElementsByClassName('close-btn')[0];
+        const popupImage = document.getElementById('popup-image');
+        const popupCaptionText = document.getElementById('popup-caption-text');
+        const downloadBtn = document.getElementById('download-btn');
+        const commentsSection = document.getElementById('comments-section');
+        const commentForm = document.getElementById('comment-form');
+
+        function openModal(data) {
+            currentPostId = data.id;
+
+            popupImage.src = data.thumbnail; 
+            popupCaptionText.textContent = data.caption || 'Tidak ada keterangan.';
+            downloadBtn.href = data.original; 
+            
+            // --- MODIFIKASI: LOGIKA TOMBOL NAVIGASI MODAL ---
+            const currentIndex = allPostIds.indexOf(currentPostId);
+            
+            // Tampilkan/Sembunyikan tombol berdasarkan posisi
+            modalPrevBtn.style.display = (currentIndex > 0) ? 'flex' : 'none'; 
+            modalNextBtn.style.display = (currentIndex < allPostIds.length - 1) ? 'flex' : 'none'; 
+            // --- AKHIR MODIFIKASI ---
+            
+            loadComments(data.id);
+            
+            modal.style.display = 'block';
+        }
+
+        // --- MODIFIKASI: FUNGSI NAVIGASI MODAL ---
+        function navigateModal(direction) {
+            if (!currentPostId) return;
+
+            const currentIndex = allPostIds.indexOf(currentPostId);
+            let nextIndex = currentIndex + direction; // direction: 1 (next) atau -1 (prev)
+
+            if (nextIndex >= 0 && nextIndex < allPostIds.length) {
+                const nextPostId = allPostIds[nextIndex];
+                
+                // Cari elemen div postingan untuk mendapatkan data-set
+                const nextPostElement = document.querySelector(`.post-item[data-id="${nextPostId}"]`);
+                
+                if (nextPostElement) {
+                    // Matikan listener komentar lama sebelum membuka yang baru (agar tidak ada duplikasi)
+                    if (currentPostId) {
+                        const oldCommentsRef = database.ref(`photo_posts/${currentPostId}/comments`);
+                        oldCommentsRef.off();
+                    }
+                    // Gunakan data-set dari elemen berikutnya untuk membuka modal
+                    openModal(nextPostElement.dataset);
+                }
+            }
+        }
+
+        // Tambahkan event listener untuk tombol navigasi modal
+        modalPrevBtn.addEventListener('click', () => navigateModal(-1));
+        modalNextBtn.addEventListener('click', () => navigateModal(1));
+
+        // Tambahkan dukungan keyboard (panah kiri/kanan)
+        window.addEventListener('keydown', (e) => {
+            if (modal.style.display === 'block') {
+                if (e.key === 'ArrowLeft') {
+                    navigateModal(-1);
+                } else if (e.key === 'ArrowRight') {
+                    navigateModal(1);
+                }
+            }
+        });
+        // --- AKHIR MODIFIKASI ---
+
+        function loadComments(postId) {
+            const commentsRef = database.ref(`photo_posts/${postId}/comments`);
+            commentsSection.innerHTML = '<p id="comment-loading" style="color: var(--secondary-color);">Memuat komentar...</p>';
+
+            commentsRef.on('value', (snapshot) => {
+                commentsSection.innerHTML = ''; 
+                const comments = snapshot.val();
+
+                if (comments) {
+                    const commentArray = Object.keys(comments).map(key => ({
+                        id: key,
+                        ...comments[key]
+                    })).sort((a, b) => a.timestamp - b.timestamp); 
+
+                    commentArray.forEach(comment => {
+                        const commentItem = document.createElement('div');
+                        commentItem.className = 'comment-item';
+                        commentItem.innerHTML = `<span class="comment-name">${comment.name}:</span> ${comment.text}`;
+                        commentsSection.appendChild(commentItem);
+                    });
+                } else {
+                    commentsSection.innerHTML = '<p style="font-size:0.9em; color: var(--text-color);">Belum ada komentar.</p>';
+                }
+            }, (error) => {
+                commentsSection.innerHTML = `<p style="color: var(--error-color); font-size:0.9em;">Gagal memuat komentar.</p>`;
+                console.error("Error loading comments:", error);
+            });
+        }
+        
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const nameInput = document.getElementById('comment-name');
+            const textInput = document.getElementById('comment-text');
+            
+            const name = nameInput.value.trim() || 'Anonim';
+            const text = textInput.value.trim();
+
+            if (!text || !currentPostId) return;
+
+            const commentData = {
+                name: name,
+                text: text,
+                timestamp: Date.now()
+            };
+
+            const commentsRef = database.ref(`photo_posts/${currentPostId}/comments`);
+            
+            commentsRef.push(commentData)
+                .then(() => {
+                    textInput.value = ''; 
+                })
+                .catch(error => {
+                    alert("Gagal mengirim komentar: " + error.message);
+                    console.error("Error sending comment:", error);
+                });
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            // MODIFIKASI: Sembunyikan tombol navigasi
+            modalPrevBtn.style.display = 'none'; 
+            modalNextBtn.style.display = 'none';
+            // AKHIR MODIFIKASI
+            if (currentPostId) {
+                const commentsRef = database.ref(`photo_posts/${currentPostId}/comments`);
+                commentsRef.off();
+                currentPostId = null;
+            }
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                // MODIFIKASI: Sembunyikan tombol navigasi
+                modalPrevBtn.style.display = 'none'; 
+                modalNextBtn.style.display = 'none';
+                // AKHIR MODIFIKASI
+                if (currentPostId) {
+                    const commentsRef = database.ref(`photo_posts/${currentPostId}/comments`);
+                    commentsRef.off();
+                    currentPostId = null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
