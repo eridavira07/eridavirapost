@@ -1,0 +1,795 @@
+/* style.css */
+
+:root {
+    --bg-color: #1a202c;
+    --text-color: #ff7300;
+    --card-bg: #2d3748;
+    --border-color: #4a5568;
+    --admin-color: #ffd700;
+    --deleted-color: #ff7300;
+    /* AKSEIN UTAMA: Ungu Seksi */
+    --accent-color: #ff7300; 
+    --ticker-bg: #e53e3e; 
+    --ticker-text: #ffffff; 
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    padding-top: 0; 
+}
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 40px 20px;
+}
+
+/* --- News Ticker Styling --- */
+#news-ticker-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-color: var(--ticker-bg); 
+    color: var(--ticker-text);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.ticker-content-wrapper {
+    display: flex;
+    overflow: hidden;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.ticker-label {
+    background-color: rgba(0, 0, 0, 0.2); 
+    padding: 0 15px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    flex-shrink: 0; 
+    color: var(--ticker-text); 
+}
+
+.ticker-text-scroll {
+    overflow: hidden;
+    white-space: nowrap;
+    line-height: 40px; 
+    padding-left: 15px;
+    font-size: 0.9em;
+}
+
+/* Animasi Berjalan */
+@keyframes ticker {
+    0% { transform: translate3d(100vw, 0, 0); } 
+    100% { transform: translate3d(-100%, 0, 0); } 
+}
+
+.ticker-text-scroll span {
+    display: inline-block;
+    padding-right: 50px; 
+    animation: ticker 25s linear infinite; 
+}
+
+
+.toggle-ticker-btn {
+    background: none;
+    border: none;
+    color: var(--ticker-text);
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0 10px;
+    height: 100%;
+    transition: background-color 0.2s;
+}
+
+.toggle-ticker-btn:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* --- Gaya Admin Berita --- */
+#active-news-list {
+    list-style: none;
+    padding: 0;
+}
+
+#active-news-list li {
+    background-color: var(--bg-color);
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 4px;
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    border-left: 5px solid var(--accent-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.news-text-display {
+    flex-grow: 1;
+    word-break: break-word;
+    margin-right: 10px;
+}
+
+.news-actions button {
+    margin-left: 8px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: opacity 0.2s;
+}
+
+.news-actions .edit-btn {
+    background-color: var(--admin-color);
+    color: var(--bg-color);
+}
+
+.news-actions .delete-btn {
+    background-color: var(--deleted-color);
+    color: white;
+}
+/* --- Akhir Gaya News Ticker --- */
+
+
+/* --- Header Styling --- */
+#dynamic-header {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+#header-wallpaper {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: object-position 0.5s ease-in-out;
+}
+
+#header-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#header-content h1 {
+    /* Font Judul (Playwrite MX Guides) */
+    font-family: 'Playwrite MX', cursive; 
+    font-size: 4.5em; 
+    font-weight: 700; 
+    margin: 0;
+    /* PERUBAHAN WARNA FONT JUDUL menjadi UNGU */
+    color: var(--accent-color); 
+    /* Sesuaikan bayangan agar ungu lebih menonjol */
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 0 0 10px rgba(147, 112, 219, 0.6); 
+    letter-spacing: 0px; 
+    line-height: 1.1;
+}
+
+#header-content p {
+    font-size: 1.2em;
+    color: #cbd5e0;
+    margin-top: 5px;
+}
+
+/* --- Loading Indicator --- */
+.loading-indicator {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    border-top: 4px solid var(--accent-color);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+/* --- Admin Controls Styling --- */
+#upload-form-container {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#upload-form-container h2 {
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    color: var(--accent-color);
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+#media-form input[type="text"],
+#media-form input[type="url"],
+#media-form textarea,
+#add-news-form input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+#media-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+#media-form button,
+#wallpaper-setting-form button,
+#add-news-form button {
+    padding: 10px 15px;
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+#media-form button:hover,
+#wallpaper-setting-form button:hover,
+#add-news-form button:hover {
+    /* Hover UNGU yang lebih terang */
+    background-color: #A98EFF; 
+}
+
+#header-settings-panel {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#wallpaper-setting-form input[type="url"] {
+    width: calc(100% - 130px);
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+/* Styling Fokus Kontrol */
+.focus-controls {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+.control-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    margin-top: 10px;
+}
+.control-grid button {
+    padding: 5px;
+    font-size: 1.2em;
+}
+
+
+/* --- Media Feed Layout --- */
+#media-feed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+
+/* --- Media Post Card Styling (Hover Lembut UNGU) --- */
+.media-post {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    /* Bayangan Lembut & Transisi Ditambahkan */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transisi untuk efek halus */
+}
+
+/* Gaya Hover pada Kartu */
+.media-post:hover {
+    transform: translateY(-3px); /* Angkat kartu sedikit */
+    /* Bayangan lebih jelas saat di-hover, menggunakan warna aksen UNGU baru */
+    box-shadow: 0 8px 16px rgba(147, 112, 219, 0.7), 0 0 10px rgba(147, 112, 219, 0.4); 
+}
+
+.post-header {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Rasio Aspek Seragam (1:1 / Persegi) */
+.media-container {
+    position: relative; 
+    width: 100%;
+    padding-bottom: 100%; 
+    overflow: hidden;
+    display: block; 
+}
+
+.media-container img {
+    position: absolute; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.media-container img:hover {
+    transform: scale(1.05);
+}
+
+.post-caption {
+    padding: 10px;
+    font-size: 0.9em;
+    color: #a0aec0;
+}
+
+
+/* --- Modal Styling --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    position: relative;
+    margin: 5% auto;
+    width: 90%;
+    max-width: 1400px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content-wrapper {
+    display: flex;
+    height: 90vh;
+}
+
+.modal-image-container {
+    flex: 2;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 60%;
+    box-sizing: border-box;
+}
+
+#modal-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.modal-comments-section {
+    flex: 1;
+    border-left: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+    max-width: 450px;
+    box-sizing: border-box;
+}
+
+.modal-comments-section h3 {
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    margin-top: 0;
+    color: var(--accent-color);
+}
+
+.comments-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 10px; 
+}
+
+.comment-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: var(--bg-color);
+    border-radius: 4px;
+}
+
+.comment-form {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.comment-form input {
+    flex-grow: 1;
+    padding: 8px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+}
+
+.comment-form button {
+    padding: 8px 15px;
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.close-btn {
+    color: white;
+    font-size: 35px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.close-btn:hover {
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    color: var(--accent-color);
+}
+
+
+/* --- Responsive Layout --- */
+@media (max-width: 1000px) {
+    .modal-content-wrapper {
+        flex-direction: column;
+        height: 90vh;
+        max-width: 90%;
+        margin-top: 20px;
+        padding-top: 0;
+    }
+
+    .modal-image-container {
+        min-height: 50vh;
+        min-width: 100%;
+    }
+
+    .modal-comments-section {
+        min-height: 40vh;
+        min-width: 100%;
+        max-height: 40vh;
+        border-top: 1px solid var(--border-color);
+        border-left: none; 
+    }
+    
+    
+    /* Hapus gaya lama yang tidak terpakai lagi */
+    .feed-header-controls {
+        /* Didefinisikan ulang di bagian bawah */
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding-top: 80px; 
+    }
+    
+    #news-ticker-bar {
+        flex-wrap: wrap; 
+        height: auto;
+    }
+    
+    .ticker-content-wrapper {
+        width: 100%;
+        height: 40px;
+    }
+    
+    .toggle-ticker-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 40px;
+    }
+    
+    main {
+        padding: 0 10px 40px 10px;
+    }
+    
+    #media-feed {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Styling Pagination BARU --- */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 0;
+    gap: 20px;
+    text-align: center;
+}
+
+#prev-page-btn,
+#next-page-btn {
+    padding: 8px 15px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#prev-page-btn:hover:not(:disabled),
+#next-page-btn:hover:not(:disabled) {
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+#prev-page-btn:disabled,
+#next-page-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+#page-numbers-display {
+    font-size: 1em;
+    color: #a0aec0;
+}
+
+/* =================================================== */
+/* --- Styling Khusus untuk Panel Unggahan Massal BBCode (Admin) --- */
+/* =================================================== */
+
+#bulk-upload-panel {
+    margin-top: 30px; 
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+#bulk-media-form {
+    display: grid;
+    gap: 15px;
+    grid-template-columns: 1fr; 
+}
+
+#bulk-media-form input[type="text"] {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#bulk-media-form textarea {
+    width: 100%;
+    height: 300px; 
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    resize: vertical; 
+    font-family: monospace; 
+    font-size: 0.9em;
+    box-sizing: border-box;
+}
+
+#bulk-submit-btn {
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    background-color: var(--accent-color); 
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    grid-column: 1 / -1; 
+}
+
+#bulk-submit-btn:hover:not([disabled]) {
+    /* Hover UNGU yang lebih terang */
+    background-color: #A98EFF; 
+}
+
+#bulk-submit-btn:disabled {
+    background-color: var(--border-color);
+    cursor: not-allowed;
+}
+
+#bulk-upload-status {
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    margin-top: 10px;
+    color: var(--accent-color);
+    text-align: center;
+    font-weight: bold;
+}
+
+/* =================================================== */
+/* --- PENYESUAIAN TATA LETAK PROFIL DAN KONTROL NAVIGASI --- */
+/* =================================================== */
+
+/* Penampung utama yang mengatur posisi foto profil dan kontrol di sampingnya */
+.profile-and-controls-container {
+    display: flex; /* Aktifkan Flexbox */
+    gap: 20px; /* Jarak antara foto profil dan kontrol */
+    
+    /* Margin diatur di sini untuk memposisikan kontainer di antara dinding dan feed */
+    /* Disesuaikan untuk tinggi 250px: (Tinggi Dinding - 250px) / 2 */
+    margin: -130px 0 20px 0;
+    
+    position: relative;
+    z-index: 10;
+}
+
+#simple-profile-picture {
+    /* DIMENSI BARU SESUAI PERMINTAAN USER */
+    width: 200px; 
+    height: 250px; 
+    
+    object-fit: cover; 
+    flex-shrink: 0; /* Pastikan gambar tidak menyusut */
+    
+    /* Hapus margin-top negatif yang lama, karena sekarang diatur di .profile-and-controls-container */
+    margin: 0; 
+    
+    /* Style Visual lainnya tetap sama */
+    border-radius: 6px; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7); 
+    border: 4px solid var(--accent-color); 
+    
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+#simple-profile-picture:hover {
+    transform: scale(1.03); /* Sedikit lebih kecil karena gambarnya lebih besar */
+    opacity: 1;
+    box-shadow: 0 8px 16px rgba(147, 112, 219, 0.7); 
+}
+
+/* Penampung Samping (Kontrol dan Judul Feed) */
+#controls-wrapper {
+    flex-grow: 1; /* Kontrol akan mengisi sisa ruang */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Dorong tombol navigasi ke bawah */
+}
+
+/* Tata letak Judul dan Tombol (di dalam controls-wrapper) */
+.feed-header-controls {
+    display: flex;
+    justify-content: space-between; 
+    align-items: flex-end; /* Sejajarkan di bagian bawah */
+    margin-bottom: 10px; /* Jarak antara judul dan tombol navigasi */
+    padding: 0;
+    flex-grow: 1; /* Agar judul berada di atas tombol navigasi */
+}
+
+/* Modifikasi Navigasi Cepat agar tidak flex-wrap, biarkan scroll horizontal jika perlu */
+/* Styling Navigasi Cepat */
+.quick-nav-controls {
+    display: flex;
+    flex-wrap: nowrap; /* Jangan wrap! */
+    overflow-x: auto; /* Aktifkan scroll horizontal jika terlalu banyak tombol */
+    padding-bottom: 10px; /* Agar scrollbar tidak menempel ke bawah */
+    margin-bottom: 0; /* Hapus margin bawah jika ada */
+    /* Hapus default padding dan margin pada list/div */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.quick-nav-btn {
+    /* Gaya Tombol: Pastikan diterapkan dengan kuat */
+    padding: 6px 10px; 
+    background-color: var(--card-bg) !important; /* Gunakan !important untuk mengatasi konflik sementara */
+    color: var(--text-color) !important; 
+    border: 1px solid var(--border-color) !important; 
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: normal; 
+    font-size: 0.85em; 
+    text-decoration: none !important; /* Hilangkan garis bawah link */
+    white-space: nowrap; 
+    transition: background-color 0.2s, border-color 0.2s;
+    /* Jarak antara tombol */
+    margin-right: 8px; 
+}
+
+.quick-nav-btn:hover {
+    /* Menggunakan ACCENT COLOR BARU (UNGU) */
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: var(--bg-color) !important; 
+}
+
+/* --- Responsive Layout untuk Mobile (Stacking) --- */
+@media (max-width: 850px) {
+    .profile-and-controls-container {
+        flex-direction: column; /* Ubah menjadi vertikal stack di mobile */
+        margin: 20px 0 20px 0; /* Hapus margin negatif */
+    }
+    
+    #simple-profile-picture {
+        width: 100%; /* Lebar penuh di ponsel */
+        height: 100px; /* Tinggi disederhanakan di ponsel */
+        margin: 0;
+        border-radius: 0;
+    }
+
+    #controls-wrapper {
+        padding-top: 15px;
+    }
+
+    .feed-header-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 0;
+    }
+    
+    .quick-nav-controls {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
