@@ -3,19 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Halaman (Admin Key)</title>
+    <title>Hentai List</title>
     
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0; /* Ubah dari 20px ke 0 untuk wallpaper penuh lebar */
             background-color: #1a1a2e;
             color: #e0e0e0;
+        }
+        
+        /* 💡 Gaya Wallpaper Dinding (BARU) */
+        #wallpaper {
+            width: 100%;
+            height: 250px; /* Tinggi Dinding */
+            background-size: cover; /* Pastikan gambar menutupi area */
+            background-repeat: no-repeat;
+            background-position: center 50%; /* Default: Tengah Vertikal */
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transition: background-position 0.3s ease; /* Transisi halus saat fokus berubah */
         }
 
         .container {
             max-width: 1000px;
-            margin: auto;
+            margin: 20px auto; /* Ubah margin menjadi 20px auto */
             background: #16213e;
             padding: 20px;
             border-radius: 8px;
@@ -23,13 +35,56 @@
         }
 
         h1, h2 {
-            color: #0f3460;
+            /* Mengubah warna judul agar seragam dengan skema warna admin */
+            color: #e94560; 
             text-align: center;
         }
         
-        /* Gaya Khusus untuk Mode Admin */
+        /* --- Gaya Kontrol Admin Wallpaper (BARU) --- */
+        #adminWallpaperControls {
+            display: none; /* Sembunyikan secara default */
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            border: 1px solid #e94560;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            background-color: #1a1a2e;
+        }
+        
+        .admin-mode #adminWallpaperControls {
+            display: flex; /* Tampilkan saat mode admin aktif */
+        }
+        
+        .focus-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .focus-controls button {
+            background-color: #e94560;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .focus-controls span {
+            font-weight: bold;
+            color: #0f3460;
+            padding: 5px 10px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+        }
+        
+        /* --- Gaya Form Admin Tombol (Disesuaikan) --- */
         #inputForm.admin-mode {
-            display: flex; /* Hanya tampil saat mode admin aktif */
+            display: flex; 
             flex-direction: column;
             gap: 15px;
             padding: 20px;
@@ -40,7 +95,7 @@
         }
 
         #inputForm:not(.admin-mode) {
-            display: none; /* Sembunyikan form secara default */
+            display: none; 
         }
         
         .admin-status.active {
@@ -97,11 +152,10 @@
             background-color: #1a1a2e;
         }
         
-        /* Kontainer untuk setiap tombol + tombol hapus */
         .button-item {
             position: relative;
             display: flex;
-            flex-direction: column; /* Tombol hapus di atas/di bawah tombol link */
+            flex-direction: column; 
         }
 
         .active-button {
@@ -126,9 +180,8 @@
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
         }
         
-        /* Gaya Tombol Hapus */
         .delete-button {
-            position: absolute; /* Tombol Hapus mengambang di pojok */
+            position: absolute; 
             top: -10px;
             right: -10px;
             background: #e94560;
@@ -141,10 +194,10 @@
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            line-height: 24px; /* Pusatkan X */
+            line-height: 24px; 
             text-align: center;
             z-index: 10;
-            display: none; /* Sembunyikan secara default */
+            display: none; 
             transition: background-color 0.3s;
         }
 
@@ -153,7 +206,6 @@
             transform: scale(1.1);
         }
         
-        /* Tampilkan Tombol Hapus HANYA jika di Mode Admin */
         .admin-mode .delete-button {
             display: block; 
         }
@@ -171,10 +223,31 @@
 </head>
 <body>
 
+<div id="wallpaper"></div> 
+
 <div class="container">
     <h1>📝 Daftar Hentai</h1>
     
     <div id="adminStatus" class="admin-status"></div> 
+    
+    <div id="adminWallpaperControls">
+        <h2>Ubah Wallpaper</h2>
+        <div class="input-group">
+            <label for="wallpaperUrl">URL Gambar Dinding (Kolom 1):</label>
+            <input type="text" id="wallpaperUrl" placeholder="Contoh: https://i.imgbox.com/gambar-dinding.png" required>
+        </div>
+        <button onclick="saveWallpaper()">Simpan URL Wallpaper ke Firebase</button>
+        
+        <hr style="border-color: #0f3460;">
+        
+        <h2>Atur Fokus Vertikal Gambar</h2>
+        <div class="focus-controls">
+            <button onclick="changeFocus('up')">⬆️</button>
+            <span id="currentFocus">Posisi: 50%</span>
+            <button onclick="changeFocus('down')">⬇️</button>
+        </div>
+        <p style="text-align: center; font-size: 12px; color: #6c757d;">(Nilai 0% = Atas, 100% = Bawah)</p>
+    </div>
     
     <div id="inputForm" class="input-form">
         <h2>Buat Tombol Baru</h2>
@@ -210,12 +283,15 @@
     // 2. Kunci dan Inisialisasi
     const REQUIRED_KEY = 'admin-eri-2025';
     const SITE_KEY = 'tombol';
+    const WALLPAPER_KEY = 'wallpaperData'; // Kunci baru untuk data wallpaper (BARU)
     
     const app = firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const buttonsRef = database.ref(SITE_KEY);
+    const wallpaperRef = database.ref(WALLPAPER_KEY); // Referensi baru untuk wallpaper (BARU)
     
     let isAdminMode = false;
+    let currentFocusPercentage = 50; // Menyimpan fokus vertikal saat ini (BARU)
 
     // 3. Fungsi untuk memeriksa Parameter URL
     function checkAdminMode() {
@@ -223,27 +299,136 @@
         const key = urlParams.get('key');
         
         const statusDiv = document.getElementById('adminStatus');
+        const inputForm = document.getElementById('inputForm');
+        const wallpaperControls = document.getElementById('adminWallpaperControls'); // Ambil elemen baru
         const container = document.querySelector('.container');
         
         if (key === REQUIRED_KEY) {
             isAdminMode = true;
-            document.getElementById('inputForm').classList.add('admin-mode');
-            container.classList.add('admin-mode'); // Tambahkan kelas ke container untuk CSS hapus
+            inputForm.classList.add('admin-mode');
+            wallpaperControls.classList.add('admin-mode'); // Tampilkan kontrol wallpaper
+            container.classList.add('admin-mode');
             
             statusDiv.textContent = '✅ Mode ADMIN AKTIF (Formulir Input Tampil)';
             statusDiv.classList.add('active');
         } else {
             isAdminMode = false;
+            inputForm.classList.remove('admin-mode');
+            wallpaperControls.classList.remove('admin-mode'); // Sembunyikan kontrol wallpaper
+            container.classList.remove('admin-mode');
+            
             statusDiv.textContent = '';
             statusDiv.classList.remove('active');
-            container.classList.remove('admin-mode');
         }
     }
 
     // Panggil fungsi ini saat halaman dimuat
     checkAdminMode();
+    
+    // --- FUNGSI UNTUK WALLPAPER (BARU) ---
 
-    // Fungsi untuk menyimpan tombol ke Firebase
+    // Fungsi untuk menyimpan URL dan Fokus Wallpaper ke Firebase
+    function saveWallpaper(newFocus = currentFocusPercentage) {
+        if (!isAdminMode) {
+            alert("Akses ditolak! Anda harus berada di Mode Admin untuk menyimpan wallpaper.");
+            return;
+        }
+        
+        const urlInput = document.getElementById('wallpaperUrl');
+        const url = urlInput.value.trim();
+
+        if (url === "") {
+            alert("URL Wallpaper tidak boleh kosong!");
+            return;
+        }
+        
+        // Pastikan fokus dalam batas 0-100
+        currentFocusPercentage = Math.max(0, Math.min(100, newFocus));
+
+        const newWallpaperData = {
+            url: url,
+            focus: currentFocusPercentage, // Simpan fokus (persentase)
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        // Simpan data di bawah kunci tunggal (tidak menggunakan push)
+        wallpaperRef.set(newWallpaperData)
+            .then(() => {
+                // Perbarui tampilan dan status fokus
+                updateWallpaper(url, currentFocusPercentage); 
+                document.getElementById('currentFocus').textContent = `Posisi: ${currentFocusPercentage}%`;
+                console.log("URL dan Fokus Wallpaper berhasil disimpan!");
+            })
+            .catch((error) => {
+                console.error("Gagal menyimpan wallpaper: ", error);
+                alert("Gagal menyimpan wallpaper. Cek konsol untuk detail.");
+            });
+    }
+    
+    // Fungsi untuk mengubah dan menyimpan fokus vertikal
+    function changeFocus(direction) {
+        if (!isAdminMode) return;
+        
+        let newFocus = currentFocusPercentage;
+        
+        if (direction === 'up') {
+            newFocus -= 5; // Pindah 5% ke atas (kurang persentase)
+        } else if (direction === 'down') {
+            newFocus += 5; // Pindah 5% ke bawah (tambah persentase)
+        }
+        
+        // Simpan fokus baru, ini juga akan memanggil saveWallpaper dengan fokus baru
+        saveWallpaper(newFocus);
+    }
+    
+    // Fungsi untuk memperbarui tampilan wallpaper
+    function updateWallpaper(url, focus) {
+        const wallpaperDiv = document.getElementById('wallpaper');
+        wallpaperDiv.style.backgroundImage = `url('${url}')`;
+        // background-position: center [focus]%
+        wallpaperDiv.style.backgroundPosition = `center ${focus}%`; 
+    }
+
+    // Memuat dan menampilkan Wallpaper dari Firebase secara realtime (BARU)
+    wallpaperRef.on('value', (snapshot) => {
+        const wallpaperDiv = document.getElementById('wallpaper');
+        const urlInput = document.getElementById('wallpaperUrl');
+        const focusSpan = document.getElementById('currentFocus');
+        
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            const url = data.url || '';
+            let focus = data.focus || 50; 
+            
+            // Pastikan fokus valid
+            focus = Math.max(0, Math.min(100, focus));
+            currentFocusPercentage = focus; 
+            
+            // Perbarui tampilan
+            updateWallpaper(url, focus);
+            
+            // Perbarui form admin jika dalam mode admin
+            if (isAdminMode) {
+                urlInput.value = url;
+                focusSpan.textContent = `Posisi: ${focus}%`;
+            }
+            
+        } else {
+            // Jika belum ada data
+            wallpaperDiv.style.backgroundImage = 'none';
+            if (isAdminMode) {
+                urlInput.value = '';
+                focusSpan.textContent = 'Posisi: 50%';
+                currentFocusPercentage = 50;
+            }
+        }
+    }, (error) => {
+        console.error("Gagal membaca data wallpaper dari Firebase: ", error);
+    });
+
+    // --- FUNGSI UNTUK TOMBOL (LAMA) ---
+    
+    // Fungsi untuk menyimpan tombol ke Firebase (LAMA)
     function saveButton() {
         if (!isAdminMode) {
             alert("Akses ditolak! Anda harus berada di Mode Admin untuk menyimpan tombol.");
@@ -283,7 +468,7 @@
             });
     }
 
-    // Fungsi BARU untuk menghapus tombol dari Firebase
+    // Fungsi BARU untuk menghapus tombol dari Firebase (LAMA)
     function deleteButton(buttonKey, buttonName) {
         if (!isAdminMode) {
             alert("Akses ditolak!");
@@ -293,11 +478,9 @@
         const confirmation = confirm(`Yakin ingin menghapus tombol "${buttonName}"?`);
         
         if (confirmation) {
-            // Hapus data dari referensi unik di Firebase
             database.ref(SITE_KEY).child(buttonKey).remove()
                 .then(() => {
                     console.log(`Tombol "${buttonName}" berhasil dihapus.`);
-                    // UI akan otomatis diperbarui karena 'buttonsRef.on("value")'
                 })
                 .catch((error) => {
                     alert("Gagal menghapus tombol. Cek konsol untuk detail.");
@@ -306,7 +489,7 @@
         }
     }
 
-    // 4. Fungsi untuk memuat dan menampilkan tombol dari Firebase secara realtime
+    // 4. Fungsi untuk memuat dan menampilkan tombol dari Firebase secara realtime (LAMA)
     buttonsRef.on('value', (snapshot) => {
         const buttonListDiv = document.getElementById('buttonList');
         buttonListDiv.innerHTML = '';
@@ -314,15 +497,12 @@
         if (snapshot.exists()) {
             const buttonsArray = [];
 
-            // Pindahkan data dari objek Firebase ke Array, simpan juga kuncinya
             snapshot.forEach((childSnapshot) => {
                 const buttonData = childSnapshot.val();
-                // **PENTING: Simpan KUNCI (KEY) unik Firebase**
                 buttonData.key = childSnapshot.key; 
                 buttonsArray.push(buttonData);
             });
             
-            // Urutkan Array berdasarkan Nama (Abjad A-Z)
             buttonsArray.sort((a, b) => {
                 const nameA = a.name.toUpperCase();
                 const nameB = b.name.toUpperCase();
@@ -332,31 +512,24 @@
                 return 0;
             });
 
-            // Tampilkan Tombol yang Sudah Diurutkan
             buttonsArray.forEach(buttonData => {
-                // 1. Buat kontainer item (parent)
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'button-item';
 
-                // 2. Buat tombol link (anak pertama)
                 const anchor = document.createElement('a');
                 anchor.href = buttonData.link;
                 anchor.textContent = buttonData.name;
                 anchor.target = '_blank';
                 anchor.className = 'active-button';
                 
-                // 3. Buat tombol Hapus (anak kedua)
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '❌';
                 deleteBtn.className = 'delete-button';
-                // Panggil fungsi deleteButton dengan key unik Firebase
                 deleteBtn.setAttribute('onclick', `deleteButton('${buttonData.key}', '${buttonData.name}')`);
                 
-                // 4. Masukkan tombol ke dalam itemDiv
                 itemDiv.appendChild(anchor);
                 itemDiv.appendChild(deleteBtn);
 
-                // 5. Masukkan itemDiv ke dalam daftar
                 buttonListDiv.appendChild(itemDiv);
             });
             
